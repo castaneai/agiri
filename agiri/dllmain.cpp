@@ -6,6 +6,8 @@
 #pragma comment(lib, "NCodeHook/distorm.lib")
 #endif
 
+#pragma comment(lib, "jansson/jansson.lib")
+
 #pragma comment(lib, "ws2_32.lib")
 
 #pragma endregion
@@ -21,6 +23,7 @@
 #include "WinsockFunctionTypedef.h"
 #include "Server.h"
 #include "SimpleThread.h"
+#include "TcpSocketList.h"
 
 #pragma endregion
 
@@ -32,14 +35,52 @@ __declspec(dllexport) void dummyExport() {}
 
 #pragma endregion
 
+#pragma region フック関数
+
+/**
+ * 現在接続中のすべてのソケットを保持するリスト
+ */
+TcpSocketList socketList;
+
 #pragma region connectのフック
 
 CONNECT_FUNC originalConnect = nullptr;
 int WINAPI hookedConnect(SOCKET socket, const sockaddr* toAddress, int addressLength)
 {
-	const char* ipAddressText = inet_ntoa(reinterpret_cast<const sockaddr_in*>(toAddress)->sin_addr);
-	return originalConnect(socket, toAddress, addressLength);
+	int result = originalConnect(socket, toAddress, addressLength);
+	if (result == 0) {
+		socketList.add(socket);
+	}
+	return result;
 }
+
+#pragma endregion
+
+#pragma region WSAConnectのフック
+
+WSA_CONNECT_FUNC originalWSAConnect = nullptr;
+int WINAPI hookedWSAConnect(SOCKET socket, const sockaddr* toAddress, int addressLength,
+	LPWSABUF caller, LPWSABUF callee, LPQOS sqos, LPQOS gqos)
+{
+	int result = originalWSAConnect(socket, toAddress, addressLength, caller, callee, sqos, gqos);
+	if (result == 0) {
+		socketList.add(socket);
+	}
+	return result;
+}
+
+#pragma endregion
+
+#pragma region sendのフック
+
+SEND_FUNC originalSend = nullptr;
+
+int WINAPI hookedSend(SOCKET socket, char* buf, int len, int flags)
+{
+	return originalSend(socket, buf, len, flags);
+}
+
+#pragma endregion
 
 #pragma endregion
 
@@ -50,7 +91,9 @@ NCodeHookIA32 hook;
 
 void createHooks()
 {
+	originalWSAConnect = hook.createHookByName("ws2_32.dll", "WSAConnect", hookedWSAConnect);
 	originalConnect = hook.createHookByName("ws2_32.dll", "connect", hookedConnect);
+	originalSend = hook.createHookByName("ws2_32.dll", "send", hookedSend);
 }
 
 #pragma endregion

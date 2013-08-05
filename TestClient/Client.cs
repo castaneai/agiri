@@ -13,8 +13,9 @@ namespace TestClient
     {
         public Client(ushort serverPort)
         {
+            var serverEP = new IPEndPoint(IPAddress.Loopback, serverPort);
             tcpClient = new TcpClient();
-            tcpClient.Connect(new IPEndPoint(IPAddress.Loopback, serverPort));
+            tcpClient.Connect(serverEP);
             reader = new StreamReader(tcpClient.GetStream());
             writer = new StreamWriter(tcpClient.GetStream());
         }

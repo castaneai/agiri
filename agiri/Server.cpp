@@ -1,4 +1,5 @@
 #include <WinSock2.h>
+#include "jansson/jansson.h"
 #include "WinsockFunctionTypedef.h"
 
 static const int BUFFER_SIZE = 2048;
@@ -10,6 +11,7 @@ void receiveForever()
 
 	sockaddr_in serverAddress;
 	serverAddress.sin_family = AF_INET;
+	// TODO: 待ち受けポート番号を変更可能にする
 	serverAddress.sin_port = htons(10800);
 	serverAddress.sin_addr.S_un.S_addr = inet_addr("127.0.0.1");
 

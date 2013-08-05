@@ -3,10 +3,14 @@
   <ItemGroup>
     <ClCompile Include="dllmain.cpp" />
     <ClCompile Include="Server.cpp" />
+    <ClCompile Include="TcpSocketInfo.cpp" />
+    <ClCompile Include="TcpSocketList.cpp" />
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="WinsockFunctionTypedef.h" />
     <ClInclude Include="Server.h" />
     <ClInclude Include="SimpleThread.h" />
+    <ClInclude Include="TcpSocketInfo.h" />
+    <ClInclude Include="TcpSocketList.h" />
   </ItemGroup>
 </Project>
