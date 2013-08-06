@@ -7,7 +7,7 @@ using System.IO;
 using System.Net;
 using System.Net.Sockets;
 
-namespace TestClient
+namespace TestServer
 {
     public class Client
     {

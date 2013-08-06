@@ -16,9 +16,9 @@ namespace TestServer
             listener.Start();
         }
 
-        public TestClient.Client Accept()
+        public Client Accept()
         {
-            return new TestClient.Client(listener.AcceptTcpClient());
+            return new Client(listener.AcceptTcpClient());
         }
 
         #region private

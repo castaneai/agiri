@@ -58,10 +58,6 @@
       <Project>{166a381d-dfb2-4f18-8ef3-6fda220ddad8}</Project>
       <Name>AgiriManager</Name>
     </ProjectReference>
-    <ProjectReference Include="..\TestClient\TestClient.csproj">
-      <Project>{16dadb01-70ac-4db7-971c-112f039b6b2c}</Project>
-      <Name>TestClient</Name>
-    </ProjectReference>
     <ProjectReference Include="..\TestServer\TestServer.csproj">
       <Project>{83c819eb-3400-4b6a-abf4-2d2e2dae130b}</Project>
       <Name>TestServer</Name>

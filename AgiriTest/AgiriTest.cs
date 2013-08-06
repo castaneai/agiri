@@ -22,7 +22,7 @@ namespace AgiriTest
 
             // run client
             var solutionDir = Path.GetFullPath(Directory.GetCurrentDirectory() + @"\..\..\..");
-            var clientPath = solutionDir + @"\TestClient\bin\Debug\TestClient.exe";
+            var clientPath = solutionDir + @"\Debug\TestClient.exe";
             clientProcess = Process.Start(clientPath);
 
             // create agirimanager
