@@ -6,7 +6,11 @@
 #pragma comment(lib, "NCodeHook/distorm.lib")
 #endif
 
+#ifdef DEBUG
+#pragma comment(lib, "jansson/jansson_dbg.lib")
+#else 
 #pragma comment(lib, "jansson/jansson.lib")
+#endif
 
 #pragma comment(lib, "ws2_32.lib")
 
