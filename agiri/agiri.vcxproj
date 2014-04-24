@@ -77,17 +77,22 @@
     </Link>
   </ItemDefinitionGroup>
   <ItemGroup>
+    <ClCompile Include="Agiri.cpp" />
     <ClCompile Include="dllmain.cpp" />
-    <ClCompile Include="Server.cpp" />
+    <ClCompile Include="MiniServer.cpp" />
+    <ClCompile Include="original_funcs.cpp" />
     <ClCompile Include="TcpSocketInfo.cpp" />
     <ClCompile Include="TcpSocketList.cpp" />
+    <ClCompile Include="hooked_funcs.cpp" />
   </ItemGroup>
   <ItemGroup>
-    <ClInclude Include="Server.h" />
+    <ClInclude Include="Agiri.h" />
+    <ClInclude Include="hooked_funcs.h" />
+    <ClInclude Include="MiniServer.h" />
+    <ClInclude Include="original_funcs.h" />
     <ClInclude Include="SimpleThread.h" />
     <ClInclude Include="TcpSocketInfo.h" />
     <ClInclude Include="TcpSocketList.h" />
-    <ClInclude Include="WinsockFunctionTypedef.h" />
   </ItemGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />
   <ImportGroup Label="ExtensionTargets">

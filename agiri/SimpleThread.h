@@ -2,37 +2,39 @@
 #include <Windows.h>
 #include <tchar.h>
 
-typedef void (*THREAD_FUNC)(void);
+namespace agiri {
 
-class SimpleThread
-{
-public:
-	SimpleThread(THREAD_FUNC threadFunc)
-		: func(nullptr), eventContext(nullptr)
-	{
-		this->func = threadFunc;
-		this->eventContext = CreateEvent(nullptr, true, false, _T("threadContext"));
-	}
+    typedef void(*THREAD_FUNC)(void);
 
-	void Start()
-	{
-		QueueUserWorkItem(this->_queueThreadFunc, this, 0);
-	}
+    class SimpleThread
+    {
+    public:
+        SimpleThread(THREAD_FUNC threadFunc)
+            : func(threadFunc), eventContext(CreateEvent(nullptr, true, false, _T("threadContext")))
+        {
+        }
 
-	void Join(int timeoutMilliseconds = INFINITE)
-	{
-		WaitForSingleObject(this->eventContext, timeoutMilliseconds);
-	}
+        void Start() const
+        {
+            QueueUserWorkItem(this->_queueThreadFunc, const_cast<SimpleThread*>(this), 0);
+        }
 
-private:
-	THREAD_FUNC func;
-	HANDLE eventContext;
+        void Join(int timeoutMilliseconds = INFINITE)
+        {
+            WaitForSingleObject(this->eventContext, timeoutMilliseconds);
+        }
 
-	static DWORD WINAPI _queueThreadFunc(LPVOID context)
-	{
-		auto thread = reinterpret_cast<SimpleThread*>(context);
-		thread->func();
-		SetEvent(thread->eventContext);
-		return 0;
-	}
-};
+    private:
+        const THREAD_FUNC func;
+        const HANDLE eventContext;
+
+        static DWORD WINAPI _queueThreadFunc(LPVOID context)
+        {
+            auto thread = reinterpret_cast<SimpleThread*>(context);
+            thread->func();
+            SetEvent(thread->eventContext);
+            return 0;
+        }
+    };
+
+}

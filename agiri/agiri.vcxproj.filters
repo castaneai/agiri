@@ -2,15 +2,52 @@
 <Project ToolsVersion="4.0" xmlns="http://schemas.microsoft.com/developer/msbuild/2003">
   <ItemGroup>
     <ClCompile Include="dllmain.cpp" />
-    <ClCompile Include="Server.cpp" />
     <ClCompile Include="TcpSocketInfo.cpp" />
     <ClCompile Include="TcpSocketList.cpp" />
+    <ClCompile Include="Agiri.cpp">
+      <Filter>agiri</Filter>
+    </ClCompile>
+    <ClCompile Include="MiniServer.cpp">
+      <Filter>agiri\server</Filter>
+    </ClCompile>
+    <ClCompile Include="original_funcs.cpp">
+      <Filter>agiri\hook\original</Filter>
+    </ClCompile>
+    <ClCompile Include="hooked_funcs.cpp">
+      <Filter>agiri\hook</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
-    <ClInclude Include="WinsockFunctionTypedef.h" />
-    <ClInclude Include="Server.h" />
-    <ClInclude Include="SimpleThread.h" />
     <ClInclude Include="TcpSocketInfo.h" />
     <ClInclude Include="TcpSocketList.h" />
+    <ClInclude Include="Agiri.h">
+      <Filter>agiri</Filter>
+    </ClInclude>
+    <ClInclude Include="MiniServer.h">
+      <Filter>agiri\server</Filter>
+    </ClInclude>
+    <ClInclude Include="SimpleThread.h">
+      <Filter>agiri</Filter>
+    </ClInclude>
+    <ClInclude Include="original_funcs.h">
+      <Filter>agiri\hook\original</Filter>
+    </ClInclude>
+    <ClInclude Include="hooked_funcs.h">
+      <Filter>agiri\hook</Filter>
+    </ClInclude>
+  </ItemGroup>
+  <ItemGroup>
+    <Filter Include="agiri">
+      <UniqueIdentifier>{41c79106-4fdc-4bb6-a556-0d0ba7fc9bc4}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="agiri\server">
+      <UniqueIdentifier>{9f5994d1-40a1-4040-85b7-5fba93ab41c0}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="agiri\hook">
+      <UniqueIdentifier>{46685277-6572-4b41-9da8-304d95728337}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="agiri\hook\original">
+      <UniqueIdentifier>{7fd0d486-5beb-4f23-8652-ebfc69620909}</UniqueIdentifier>
+    </Filter>
   </ItemGroup>
 </Project>
