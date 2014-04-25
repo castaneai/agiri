@@ -66,7 +66,7 @@ namespace agiri
     void Agiri::createHooks()
     {
         hook::original::WSAConnect = this->hook.createHookByName("ws2_32.dll", "WSAConnect", hook::WSAConnect);
-        hook::original::connect = hook.createHookByName("ws2_32.dll", "connect", hook::connect);
-        hook::original::send = hook.createHookByName("ws2_32.dll", "send", hook::send);
+        hook::original::connect = this->hook.createHookByName("ws2_32.dll", "connect", hook::connect);
+        hook::original::send = this->hook.createHookByName("ws2_32.dll", "send", hook::send);
     }
 }
