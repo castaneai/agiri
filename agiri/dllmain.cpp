@@ -11,7 +11,7 @@
 #pragma endregion
 
 #include <Windows.h>
-#include "Agiri.h"
+#include "agiri.h"
 
 #pragma region エクスポート関数
 
@@ -23,18 +23,16 @@ __declspec(dllexport) void dummyExport() {}
 
 #pragma region メイン関数
 
-using namespace agiri;
-
 // あぎりさん本体
 // グローバル領域にいるので，プロセスが生きている間はずっと保持される
-Agiri ag("127.0.0.1", 10800);
+agiri::Agiri ag("127.0.0.1", 10800);
 
 BOOL APIENTRY DllMain(HMODULE module, DWORD  reason, LPVOID reserved)
 {
 	switch (reason)
 	{
 	case DLL_PROCESS_ATTACH:
-        ag.start();
+        agiri::start();
 		break;
 
 	case DLL_THREAD_ATTACH:

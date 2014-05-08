@@ -1,72 +1,114 @@
-#include "Agiri.h"
-#include "MiniServer.h"
+// Windows.hとWinsock2.hの両方をインクルードした時の定義衝突を回避する不思議の呪文
+#define WIN32_LEAN_AND_MEAN
+
+// WinAPIフックのライブラリ NCodeHook
+// NCodeHookの中でWindows.hも同時にインクルードされる
+#include "NCodeHook/NCodeHookInstantiation.h"
+
+#include <WinSock2.h>
+
+#include "agiri.h"
 #include "SimpleThread.h"
-#include "original_funcs.h"
-#include "hooked_funcs.h"
+#include "server.h"
 
 namespace agiri
 {
+    /**
+     * APIフック本体
+     */
+    NCodeHookIA32 hooker;
+
+    const SimpleThread* serverThread = nullptr;
 
     /**
      * threadFuncで必要となるIPアドレス
-     * threadFuncはstatic関数なので，そこからアクセスできるようにするには
-     * このように変数自体もstaticにしておくしかない．
-     * できればAgiriクラスのコンストラクタから渡したかったが・・
      */
-    static const char* serverIpAddress = nullptr;
+    const char* serverIpAddress = nullptr;
 
     /**
      * threadFuncで必要となるポート番号
-     * IPアドレスと同じ理由によりstaticである
      */
-    static unsigned short serverPort = 0;
+    unsigned short serverPort = 0;
 
-    /**
-     * 別スレッドで実行する関数
-     * agiri::server::MiniServer::receiveForeverをそのままSimpleThreadに渡したかったが，
-     * SimpleThreadが受け付けるのは引数なしの関数だけなので，
-     * thisポインタを内部で受け取っているメンバ関数は渡せない
-     * だから，ここでstaticなスレッド実行用の関数を作り，
-     * 中身ではサーバーを立てて永遠待ち受けするだけの処理を入れてある
-     */
-    static void threadFunc()
+#pragma region 元の関数への参照
+
+    namespace original
     {
-        // サーバーを立てる
-        server::MiniServer(serverIpAddress, serverPort).receiveForever();
+        int (WINAPI *connect)(SOCKET socket, const sockaddr* toAddress, int addressLength);
+        int (WINAPI *WSAConnect)(SOCKET socket, const sockaddr* toAddress, int addressLength,
+            LPWSABUF caller, LPWSABUF callee, LPQOS sqos, LPQOS gqos);
+        int (WINAPI *send)(SOCKET socket, char* sendBuffer, int sendLength, int flags);
+        int (WINAPI *recv)(SOCKET socket, char* recvBuffer, int recvLength, int flags);
     }
 
-    /**
-     * 新しいあぎりさんを作る
-     *
-     * @param serverIpAddress 差し込むsendを受け取るサーバーの待ち受けIPアドレス
-     * @param serverPort 差し込むsendを受け取るサーバーの待受ポート番号
-     */
-    Agiri::Agiri(const char* serverIpAddress, const unsigned short serverPort)
-        : serverThread(new SimpleThread(agiri::threadFunc)), hook()
-    {
-        agiri::serverIpAddress = serverIpAddress;
-        agiri::serverPort = serverPort;
-        this->serverThread->Start();
-    }
+#pragma endregion
 
+#pragma region フック関数
 
-    Agiri::~Agiri()
+    namespace hooked
     {
-        if (this->serverThread != nullptr) {
-            delete this->serverThread;
+        int WINAPI connect(SOCKET socket, const sockaddr* toAddress, int addressLength)
+        {
+            int result = original::connect(socket, toAddress, addressLength);
+            if (result == 0) {
+                // socketList.add(socket);
+            }
+            return result;
+        }
+
+        int WINAPI WSAConnect(SOCKET socket, const sockaddr* toAddress, int addressLength,
+            LPWSABUF caller, LPWSABUF callee, LPQOS sqos, LPQOS gqos)
+        {
+            int result = original::WSAConnect(socket, toAddress, addressLength, caller, callee, sqos, gqos);
+            if (result == 0) {
+                // socketList.add(socket);
+            }
+            return result;
+        }
+
+        int WINAPI send(SOCKET socket, char* buf, int len, int flags)
+        {
+            return original::send(socket, buf, len, flags);
         }
     }
 
-    void Agiri::start()
+#pragma endregion
+
+    void createHooks()
     {
-        this->createHooks();
+        original::WSAConnect = hooker.createHookByName("ws2_32.dll", "WSAConnect", hooked::WSAConnect);
+        original::connect = hooker.createHookByName("ws2_32.dll", "connect", hooked::connect);
+        original::send = hooker.createHookByName("ws2_32.dll", "send", hooked::send);
     }
 
-
-    void Agiri::createHooks()
+    void start()
     {
-        hook::original::WSAConnect = this->hook.createHookByName("ws2_32.dll", "WSAConnect", hook::WSAConnect);
-        hook::original::connect = this->hook.createHookByName("ws2_32.dll", "connect", hook::connect);
-        hook::original::send = this->hook.createHookByName("ws2_32.dll", "send", hook::send);
+        createHooks();
+    }
+
+    /**
+    * 別スレッドで実行する関数
+    * startServerをそのままSimpleThreadに渡したかったが，
+    * SimpleThreadが受け付けるのは引数なしの関数だけなので，
+    * thisポインタを内部で受け取っているメンバ関数は渡せない
+    */
+    void threadFunc()
+    {
+        // サーバーを立てる
+        startServer(serverIpAddress, serverPort);
+    }
+
+    /**
+    * 新しいあぎりさんを作る
+    *
+    * @param serverIpAddress 差し込むsendを受け取るサーバーの待ち受けIPアドレス
+    * @param serverPort 差し込むsendを受け取るサーバーの待受ポート番号
+    */
+    Agiri::Agiri(const char* serverIpAddress, const unsigned short serverPort)
+    {
+        agiri::serverIpAddress = serverIpAddress;
+        agiri::serverPort = serverPort;
+        agiri::serverThread = new SimpleThread(agiri::threadFunc);
+        agiri::serverThread->Start();
     }
 }
