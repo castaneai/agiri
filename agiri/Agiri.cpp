@@ -95,7 +95,7 @@ namespace agiri
     void threadFunc()
     {
         // サーバーを立てる
-        startServer(serverIpAddress, serverPort);
+        startServer(serverIpAddress, serverPort, );
     }
 
     /**

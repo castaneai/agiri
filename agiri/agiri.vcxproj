@@ -79,6 +79,7 @@
   <ItemGroup>
     <ClCompile Include="agiri.cpp" />
     <ClCompile Include="dllmain.cpp" />
+    <ClCompile Include="server.cpp" />
     <ClCompile Include="TcpSocketInfo.cpp" />
     <ClCompile Include="TcpSocketList.cpp" />
   </ItemGroup>

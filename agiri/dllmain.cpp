@@ -32,6 +32,8 @@ BOOL APIENTRY DllMain(HMODULE module, DWORD  reason, LPVOID reserved)
 	switch (reason)
 	{
 	case DLL_PROCESS_ATTACH:
+        // startHook();
+        // startServer();
         agiri::start();
 		break;
 

@@ -7,6 +7,9 @@
     <ClCompile Include="agiri.cpp">
       <Filter>agiri</Filter>
     </ClCompile>
+    <ClCompile Include="server.cpp">
+      <Filter>agiri</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="TcpSocketInfo.h" />
