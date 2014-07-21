@@ -1,102 +1,122 @@
+#include "global.h"
 #include "server.h"
 #include <list>
+#include "SimpleThread.h"
 
-static enum class PacketType : unsigned char
-{
-    ListSocket = 0x01,
-    InjectSend = 0x03
-};
+// server.cppの内部だけで使うグローバル変数
+// 無名名前空間にすると他のファイルからアクセスされなくなる
+namespace {
+	// サーバーの待ち受けソケット
+	SOCKET listenSocket;
 
-void receiveCompletely(RECV_FUNC originalRecv, SOCKET sock, const int length, char* outputBuffer)
-{
-    int receivedLength = 0;
-    while (receivedLength < length) {
-        originalRecv(sock, outputBuffer + receivedLength, length - receivedLength, 0);
-    }
-}
-
-char receiveChar(RECV_FUNC originalRecv, SOCKET sock)
-{
-    char result;
-    receiveCompletely(originalRecv, sock, sizeof(char), &result);
-    return result;
-}
-
-int receiveInt32(RECV_FUNC originalRecv, SOCKET sock)
-{
-    int result;
-    receiveCompletely(originalRecv, sock, 4, reinterpret_cast<char*>(&result));
-    return result;
+	// クライアントリスト
+	std::list<SOCKET> clients;
 }
 
 /**
-* 相手ソケットから1つのパケットを受信する
-* パケットの種類を特定し，返り値とする
-* パケットの中身は引数packetDataに入る
-* 中身の大きさはpacketDataLengthに入る
-*/
-PacketType receivePacket(RECV_FUNC originalRecv, SOCKET sock, __out char* packetData, __out int* packetDataLength)
+ * 指定したソケットをノンブロッキングにする
+ */
+void toNonBlocking(SOCKET socket)
 {
-    // 何をするパケットなのかを読み取る
-    PacketType packetType = (PacketType) receiveChar(originalRecv, sock);
-
-    // データ長を読み取る
-    *packetDataLength = receiveInt32(originalRecv, sock);
-
-    // パケットデータを読み取る
-    receiveCompletely(originalRecv, sock, *packetDataLength, packetData);
+	// ノンブロッキングにする
+	u_long socketMode = 1;
+	ioctlsocket(socket, FIONBIO, &socketMode);
 }
 
-void startServer(const char* ipAddress, const unsigned short port,
-    ONRECV on_recv, ONERROR on_error, RECV_FUNC originalRecv)
+/**
+ * 1クライアントを処理する
+ *
+ * クライアントが切断したりなどのエラーがあればfalseを返す
+ */
+bool processClient(SOCKET client)
 {
-    // winsock 初期化
-    WSADATA d;
-    WSAStartup(MAKEWORD(2, 0), &d);
+	char buffer[0xffff] = { 0 };
+	int receivedLength = global::original_api::recv(client, buffer, 0xffff, 0);
+	// クライアントソケットはノンブロッキングモードになっているので，
+	// WSAEWOULDBLOCKの場合はエラーではない．
+	if (receivedLength < 1 && GetLastError() != WSAEWOULDBLOCK) {
+		return false;
+	}
 
-    // サーバー用ソケット作成
-    SOCKET server_socket = socket(AF_INET, SOCK_STREAM, IPPROTO_TCP);
-    sockaddr_in server_address;
-    server_address.sin_family = AF_INET;
-    server_address.sin_addr.S_un.S_addr = inet_addr(ipAddress);
-    server_address.sin_port = htons(port);
-    if (bind(server_socket, (sockaddr*) &server_address, sizeof(server_address)) != 0) {
-        on_error("socket bind failed", GetLastError());
-        return;
-    }
-    if (listen(server_socket, 5) != 0) {
-        on_error("socket listen failed", GetLastError());
-    }
-    // ノンブロッキングにする
-    u_long socket_mode = 1;
-    ioctlsocket(server_socket, FIONBIO, &socket_mode);
+	if (global::targetSocket != INVALID_SOCKET) {
+		// クライアントから送られてきたものをそのままsendする
+		global::original_api::send(global::targetSocket, buffer, receivedLength, 0);
+	}
+	return true;
+}
 
-    // クライアントリスト
-    std::list<SOCKET> clients;
+/**
+ * 外部クライアント待ち受けサーバーを作る
+ *
+ * @param listenIpAddress 待ち受けIPアドレス（ipv4文字列)
+ * @param listenPort 待ち受けポート番号
+ * @param onError 失敗時に呼び出すコールバック
+ * @return 待ち受け(listen)するソケット
+ */
+SOCKET prepareServer(const char* listenIpAddress, const unsigned short listenPort, ErrorCallbackFunc onError)
+{
+	// winsock 初期化
+	WSADATA d;
+	WSAStartup(MAKEWORD(2, 0), &d);
 
-    while (true) {
-        // 新しいクライアントの受け入れ
-        sockaddr_in client_address = { 0 };
-        int client_address_length = sizeof(client_address);
-        SOCKET client = accept(server_socket, (sockaddr*) &client_address, &client_address_length);
-        if (client != INVALID_SOCKET) {
-            clients.push_back(client);
-        }
+	// サーバー用ソケット作成
+	SOCKET listenSocket = socket(AF_INET, SOCK_STREAM, IPPROTO_TCP);
+	sockaddr_in server_address;
+	server_address.sin_family = AF_INET;
+	server_address.sin_addr.S_un.S_addr = inet_addr(listenIpAddress);
+	server_address.sin_port = htons(listenPort);
+	if (bind(listenSocket, (sockaddr*) &server_address, sizeof(server_address)) != 0) {
+		onError("socket bind failed", GetLastError());
+		return INVALID_SOCKET;
+	}
+	if (listen(listenSocket, 5) != 0) {
+		onError("socket listen failed", GetLastError());
+		return INVALID_SOCKET;
+	}
+	toNonBlocking(listenSocket);
 
-        // 接続済のクライアントからの受信
-        for (SOCKET client : clients) {
-            char buffer[0xffff] = { 0 };
-            int received_length = originalRecv(client, buffer, 0xffff, 0);
-            if (received_length < 1 && GetLastError() != WSAEWOULDBLOCK) {
-                clients.remove(client);
-                break;
-            }
-            if (received_length > 0) {
-                PacketType packetType = receivePacket()
-            }
-        }
-        Sleep(10);
-    }
+	return listenSocket;
+}
 
-    WSACleanup();
+/**
+ * 別スレッドで実行されるサーバー関数
+ */
+void serverFunc()
+{
+	while (true) {
+		// 新しいクライアントを歓迎する
+		sockaddr_in clientAddress = { 0 };
+		int clientAddressLength = sizeof(clientAddress);
+		SOCKET newClient = accept(listenSocket, (sockaddr*) &clientAddress, &clientAddressLength);
+		if (newClient != INVALID_SOCKET) {
+			toNonBlocking(newClient);
+			clients.push_back(newClient);
+		}
+
+		// クライアントからデータ受け取る
+		for (SOCKET client : clients) {
+			if (processClient(client) == false) {
+				clients.remove(client);
+				break;
+			}
+		}
+
+		// 少しスリープしておく
+		Sleep(10);
+	}
+}
+
+/**
+ * サーバーを始める
+ */
+void startServer(const char* ipAddress, const unsigned short port, ErrorCallbackFunc onError)
+{
+	// サーバーの用意する
+	listenSocket = prepareServer(ipAddress, port, onError);
+
+	// サーバーを別スレッドで開始
+	// ここの処理はdllmainの中なので別スレッドにしないとdllのattachで対象プロセスが止まってしまうため．
+	// このSimpleThreadインスタンスはdllをdetachするまで残しておくこと．でないとaccess violationが出るよ．
+	// TODO: newしたままdeleteしていない
+	(new SimpleThread(serverFunc))->Start();
 }

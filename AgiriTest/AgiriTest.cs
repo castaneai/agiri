@@ -8,12 +8,22 @@ namespace AgiriTest
     [TestClass]
     public class AgiriTest
     {
-        static TestServer.Server server;
-
+        /// <summary>
+        /// クライアント側(agiri.dllを差し込む側)
+        /// DLLを差し込むので，外部プロセスとして起動する
+        /// </summary>
         static Process clientProcess;
 
-        static AgiriManager.AgiriManager manager;
+        /// <summary>
+        /// サーバー側
+        /// </summary>
+        static TestServer.Server server;
 
+
+        /// <summary>
+        /// 最初に1度だけ実行される初期化
+        /// </summary>
+        /// <param name="testContext"></param>
         [ClassInitialize()]
         public static void Init(TestContext testContext)
         {
@@ -24,25 +34,41 @@ namespace AgiriTest
             var solutionDir = Path.GetFullPath(Directory.GetCurrentDirectory() + @"\..\..\..");
             var clientPath = solutionDir + @"\Debug\TestClient.exe";
             clientProcess = Process.Start(clientPath);
-
-            // create agirimanager
-            manager = new AgiriManager.AgiriManager(10800);
-            // なぜかSleepを入れないとUdpClient.Receiveで切断される・・？
-            System.Threading.Thread.Sleep(100);
         }
 
+        /// <summary>
+        /// 最後に1度だけ実行される
+        /// </summary>
         [ClassCleanup]
         public static void End()
         {
             clientProcess.CloseMainWindow();
         }
 
+        
+        /// <summary>
+        /// agiriの差込用ソケットに接続できるかどうかテスト
+        /// </summary>
         [TestMethod]
-        public void TestPing()
+        public void TestConnect()
         {
-            manager.Send("ping");
-            var response = manager.Receive();
-            Assert.AreEqual("pong", response);
+            var testInjectorClient = new TestServer.Client(10800);
+        }
+
+        /// <summary>
+        /// 外部からsendを差し込みできるかテスト
+        /// </summary>
+        [TestMethod]
+        public void TestInject()
+        {
+            var client = server.Accept();
+
+            var testInjectorClient = new TestServer.Client(10800);
+            System.Threading.Thread.Sleep(1000);
+            testInjectorClient.Send("agiri");
+
+            var receivedMessage = client.Receive();
+            Assert.AreEqual("agiri", receivedMessage);
         }
     }
 }

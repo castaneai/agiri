@@ -1,10 +1,14 @@
 agiri
 ==========
+特定のTCP接続をフック．
 
-![まだ発展途上なのですよ～](http://ogmansblog.files.wordpress.com/2012/04/agiri.jpg)
+起動方法
+------------
+1. agiri.dllを対象プロセスにdll injectionする
+2. agiriは10800番ポートで待機し始める
+3. 10800につなぐと，そのソケットを対象プロセスのソケットと同一化できる
+
 
 デバッグ方法
 =============
-1. VisualStudioでagiri.slnを開く
-2. ソリューションをビルドする
-3. agiriプロジェクトのデバッグを開始すると簡単なテストアプリケーションが起動する
+VisualStudioでAgiriTestをテストエクスプローラー上で実行させる
