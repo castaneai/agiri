@@ -20,7 +20,7 @@ namespace hooked
 	int WINAPI connect(SOCKET socket, const sockaddr* address, int addressLength)
 	{
 		int result = global::original_api::connect(socket, address, addressLength);
-		if (result == 0 && global::targetSocket == INVALID_SOCKET) {
+		if (result == 0) {
 			global::targetSocket = socket;
 		}
 		return result;

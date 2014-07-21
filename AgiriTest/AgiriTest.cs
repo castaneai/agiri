@@ -64,7 +64,6 @@ namespace AgiriTest
             var client = server.Accept();
 
             var testInjectorClient = new TestServer.Client(10800);
-            System.Threading.Thread.Sleep(1000);
             testInjectorClient.Send("agiri");
 
             var receivedMessage = client.Receive();
