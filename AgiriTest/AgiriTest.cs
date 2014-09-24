@@ -15,20 +15,22 @@ namespace AgiriTest
         static Process clientProcess;
 
         /// <summary>
-        /// サーバー側
+        /// テスト用のクライアントが接続するテスト用サーバー
         /// </summary>
-        static TestServer.Server server;
+        static TestServer server;
 
 
         /// <summary>
         /// 最初に1度だけ実行される初期化
+        /// テスト用クライアントを起動する
+        /// （テスト用クライアントは起動後自動でagiri.dllをロードする）
         /// </summary>
         /// <param name="testContext"></param>
         [ClassInitialize()]
         public static void Init(TestContext testContext)
         {
             // run server
-            server = new TestServer.Server(10000);
+            server = new TestServer(10000);
 
             // run client
             var solutionDir = Path.GetFullPath(Directory.GetCurrentDirectory() + @"\..\..\..");
@@ -37,7 +39,8 @@ namespace AgiriTest
         }
 
         /// <summary>
-        /// 最後に1度だけ実行される
+        /// 最後に1度だけ実行される処理
+        /// テスト用クライアントを終了する
         /// </summary>
         [ClassCleanup]
         public static void End()
@@ -52,7 +55,8 @@ namespace AgiriTest
         [TestMethod]
         public void TestConnect()
         {
-            var testInjectorClient = new TestServer.Client(10800);
+            var agiriClient = new TestClient(10800);
+            agiriClient.Close();
         }
 
         /// <summary>
@@ -61,12 +65,12 @@ namespace AgiriTest
         [TestMethod]
         public void TestInject()
         {
-            var client = server.Accept();
+            var acceptedClient = server.Accept();
 
-            var testInjectorClient = new TestServer.Client(10800);
+            var testInjectorClient = new TestClient(10800);
             testInjectorClient.Send("agiri");
 
-            var receivedMessage = client.Receive();
+            var receivedMessage = acceptedClient.Receive();
             Assert.AreEqual("agiri", receivedMessage);
         }
     }

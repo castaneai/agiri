@@ -1,9 +1,4 @@
-﻿using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
-using System.IO;
+﻿using System.IO;
 using System.Net;
 using System.Net.Sockets;
 
@@ -41,11 +36,11 @@ namespace TestServer
 
         #region private
 
-        private TcpClient tcpClient;
+        private readonly TcpClient tcpClient;
 
-        private StreamReader reader;
+        private readonly StreamReader reader;
 
-        private StreamWriter writer;
+        private readonly StreamWriter writer;
 
         #endregion
     }

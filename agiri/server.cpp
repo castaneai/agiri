@@ -2,6 +2,7 @@
 #include "server.h"
 #include <list>
 #include "SimpleThread.h"
+#include "AgiriNetworkClient.h"
 
 // server.cppの内部だけで使うグローバル変数
 // 無名名前空間にすると他のファイルからアクセスされなくなる
@@ -10,7 +11,7 @@ namespace {
 	SOCKET listenSocket;
 
 	// クライアントリスト
-	std::list<SOCKET> clients;
+	std::list<AgiriNetworkClient*> clients;
 }
 
 /**
@@ -28,13 +29,11 @@ void toNonBlocking(SOCKET socket)
  *
  * クライアントが切断したりなどのエラーがあればfalseを返す
  */
-bool processClient(SOCKET client)
+bool processClient(const AgiriNetworkClient* client)
 {
 	char buffer[0xffff] = { 0 };
-	int receivedLength = global::original_api::recv(client, buffer, 0xffff, 0);
-	// クライアントソケットはノンブロッキングモードになっているので，
-	// WSAEWOULDBLOCKの場合はエラーではない．
-	if (receivedLength < 1 && GetLastError() != WSAEWOULDBLOCK) {
+    int receivedLength = client->recv(buffer);
+    if (receivedLength < 1) {
 		return false;
 	}
 
@@ -90,11 +89,11 @@ void serverFunc()
 		SOCKET newClient = accept(listenSocket, (sockaddr*) &clientAddress, &clientAddressLength);
 		if (newClient != INVALID_SOCKET) {
 			toNonBlocking(newClient);
-			clients.push_back(newClient);
+			clients.push_back(new AgiriNetworkClient(newClient));
 		}
 
 		// クライアントからデータ受け取る
-		for (SOCKET client : clients) {
+		for (auto client : clients) {
 			if (processClient(client) == false) {
 				clients.remove(client);
 				break;

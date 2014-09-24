@@ -6,6 +6,7 @@
     <ClCompile Include="TcpSocketList.cpp" />
     <ClCompile Include="hook.cpp" />
     <ClCompile Include="server.cpp" />
+    <ClCompile Include="AgiriNetworkClient.cpp" />
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="TcpSocketInfo.h" />
@@ -14,5 +15,6 @@
     <ClInclude Include="SimpleThread.h" />
     <ClInclude Include="hook.h" />
     <ClInclude Include="global.h" />
+    <ClInclude Include="AgiriNetworkClient.h" />
   </ItemGroup>
 </Project>

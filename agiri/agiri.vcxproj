@@ -20,7 +20,7 @@
     <ConfigurationType>DynamicLibrary</ConfigurationType>
     <UseDebugLibraries>true</UseDebugLibraries>
     <CharacterSet>Unicode</CharacterSet>
-    <PlatformToolset>v140</PlatformToolset>
+    <PlatformToolset>v120</PlatformToolset>
   </PropertyGroup>
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Release|Win32'" Label="Configuration">
     <ConfigurationType>DynamicLibrary</ConfigurationType>
@@ -77,6 +77,7 @@
     </Link>
   </ItemDefinitionGroup>
   <ItemGroup>
+    <ClCompile Include="AgiriNetworkClient.cpp" />
     <ClCompile Include="hook.cpp" />
     <ClCompile Include="dllmain.cpp" />
     <ClCompile Include="server.cpp" />
@@ -84,6 +85,7 @@
     <ClCompile Include="TcpSocketList.cpp" />
   </ItemGroup>
   <ItemGroup>
+    <ClInclude Include="AgiriNetworkClient.h" />
     <ClInclude Include="global.h" />
     <ClInclude Include="hook.h" />
     <ClInclude Include="server.h" />
