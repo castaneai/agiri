@@ -1,8 +1,8 @@
-agiri - A TCP proxy for Windows processes.
+agiri - TCP proxy for Windows
 =============================================
 **This project work in progress, sorry.**
 
-A TCP proxy for Windows processes.
+TCP proxy for Windows processes (.exe files). This program enables your programs to edit, filter or inject TCP packets.
 
 ![agiri-san](https://raw.githubusercontent.com/castaneai/agiri/master/doc/icon.png)
 
@@ -11,6 +11,10 @@ Overview
 ![overview](https://raw.githubusercontent.com/castaneai/agiri/master/doc/system.png)
 
 The agiri provides **ONLY** two sockets for proxy program which you prepared. For instance, Your program send some data with *agiri external socket*, which is sent to server.
+
+GUI Wireframe
+----------------
+![gui](https://raw.githubusercontent.com/castaneai/agiri/master/doc/gui.png)
 
 Requirement
 ------------------
