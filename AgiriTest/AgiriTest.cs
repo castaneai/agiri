@@ -70,7 +70,7 @@ namespace AgiriTest
             sock.Connect("localhost", 10800);
             var sendData = new byte[] { 0x01, 0x00, 0x00 };
             sock.Send(sendData);
-            var buffer = new byte[3];
+            var buffer = new byte[] { 0x77, 0x77, 0x77 };
             sock.Receive(buffer);
             Assert.AreEqual(0x01, buffer[0]);
             Assert.AreEqual(0x00, buffer[1]);

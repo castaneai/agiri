@@ -2,12 +2,17 @@
 
 SOCKET listenSocket;
 
-inline void recvAll(const SOCKET sock, const int length, char* output)
+inline bool recvAll(const SOCKET sock, const int length, char* output)
 {
 	int receivedLength = 0;
 	while (receivedLength < length) {
-		receivedLength += global::original_api::recv(sock, output + receivedLength, length - receivedLength, 0);
+		int result = global::original_api::recv(sock, output + receivedLength, length - receivedLength, 0);
+		if (result < 1) {
+			return false;
+		}
+		receivedLength += result;
 	}
+	return true;
 }
 
 void processClient(const SOCKET sock)
@@ -15,17 +20,20 @@ void processClient(const SOCKET sock)
 	while (true) {
 		int dataLength = 0;
 		// recv len
-		recvAll(sock, sizeof(short), reinterpret_cast<char*>(&dataLength));
+		if (!recvAll(sock, sizeof(short), reinterpret_cast<char*>(&dataLength))) {
+			break;
+		}
 
 		// recv data
 		char data[0xffff] = { 0 };
-		recvAll(sock, dataLength, data);
+		if (!recvAll(sock, dataLength, data)) {
+			break;
+		}
 		switch (data[0]) {
 		// ping
 		case 0x00: 
-			MessageBox(nullptr, L"recv ping!", L"", 0);
 			char response[] = { 0x01, 0x00, 0x01 }; // datalen, pong
-			global::original_api::send(sock, response, 1, 0);
+			global::original_api::send(sock, response, sizeof(response), 0);
 		}
 	}
 }
