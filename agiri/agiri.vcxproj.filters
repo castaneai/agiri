@@ -2,19 +2,10 @@
 <Project ToolsVersion="4.0" xmlns="http://schemas.microsoft.com/developer/msbuild/2003">
   <ItemGroup>
     <ClCompile Include="dllmain.cpp" />
-    <ClCompile Include="TcpSocketInfo.cpp" />
-    <ClCompile Include="TcpSocketList.cpp" />
     <ClCompile Include="hook.cpp" />
     <ClCompile Include="server.cpp" />
-    <ClCompile Include="AgiriNetworkClient.cpp" />
   </ItemGroup>
   <ItemGroup>
-    <ClInclude Include="TcpSocketInfo.h" />
-    <ClInclude Include="TcpSocketList.h" />
-    <ClInclude Include="server.h" />
-    <ClInclude Include="SimpleThread.h" />
-    <ClInclude Include="hook.h" />
     <ClInclude Include="global.h" />
-    <ClInclude Include="AgiriNetworkClient.h" />
   </ItemGroup>
 </Project>

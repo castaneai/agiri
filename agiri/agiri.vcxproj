@@ -20,7 +20,7 @@
     <ConfigurationType>DynamicLibrary</ConfigurationType>
     <UseDebugLibraries>true</UseDebugLibraries>
     <CharacterSet>Unicode</CharacterSet>
-    <PlatformToolset>v120</PlatformToolset>
+    <PlatformToolset>v140</PlatformToolset>
   </PropertyGroup>
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Release|Win32'" Label="Configuration">
     <ConfigurationType>DynamicLibrary</ConfigurationType>
@@ -77,21 +77,12 @@
     </Link>
   </ItemDefinitionGroup>
   <ItemGroup>
-    <ClCompile Include="AgiriNetworkClient.cpp" />
     <ClCompile Include="hook.cpp" />
     <ClCompile Include="dllmain.cpp" />
     <ClCompile Include="server.cpp" />
-    <ClCompile Include="TcpSocketInfo.cpp" />
-    <ClCompile Include="TcpSocketList.cpp" />
   </ItemGroup>
   <ItemGroup>
-    <ClInclude Include="AgiriNetworkClient.h" />
     <ClInclude Include="global.h" />
-    <ClInclude Include="hook.h" />
-    <ClInclude Include="server.h" />
-    <ClInclude Include="SimpleThread.h" />
-    <ClInclude Include="TcpSocketInfo.h" />
-    <ClInclude Include="TcpSocketList.h" />
   </ItemGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />
   <ImportGroup Label="ExtensionTargets">

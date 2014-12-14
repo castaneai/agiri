@@ -1,6 +1,7 @@
 ﻿using System;
 using System.Diagnostics;
 using System.IO;
+using System.Net.Sockets;
 using Microsoft.VisualStudio.TestTools.UnitTesting;
 
 namespace AgiriTest
@@ -18,7 +19,6 @@ namespace AgiriTest
         /// テスト用のクライアントが接続するテスト用サーバー
         /// </summary>
         static TestServer server;
-
 
         /// <summary>
         /// 最初に1度だけ実行される初期化
@@ -55,8 +55,9 @@ namespace AgiriTest
         [TestMethod]
         public void TestConnect()
         {
-            var agiriClient = new TestClient(10800);
-            agiriClient.Close();
+            var sock = new Socket(SocketType.Stream, ProtocolType.Tcp);
+            sock.Connect("localhost", 10800);
+            sock.Close();
         }
 
         /// <summary>
@@ -65,13 +66,16 @@ namespace AgiriTest
         [TestMethod]
         public void TestInject()
         {
-            var acceptedClient = server.Accept();
-
-            var testInjectorClient = new TestClient(10800);
-            testInjectorClient.Send("agiri");
-
-            var receivedMessage = acceptedClient.Receive();
-            Assert.AreEqual("agiri", receivedMessage);
+            var sock = new Socket(SocketType.Stream, ProtocolType.Tcp);
+            sock.Connect("localhost", 10800);
+            var sendData = new byte[] { 0x01, 0x00, 0x00 };
+            sock.Send(sendData);
+            var buffer = new byte[3];
+            sock.Receive(buffer);
+            Assert.AreEqual(0x01, buffer[0]);
+            Assert.AreEqual(0x00, buffer[1]);
+            Assert.AreEqual(0x01, buffer[2]);
+            sock.Close();
         }
     }
 }
