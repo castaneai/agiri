@@ -1,6 +1,8 @@
 ﻿using System;
+using System.Linq;
 using System.Diagnostics;
 using System.IO;
+using System.Net;
 using System.Net.Sockets;
 using Microsoft.VisualStudio.TestTools.UnitTesting;
 
@@ -18,7 +20,7 @@ namespace AgiriTest
         /// <summary>
         /// テスト用のクライアントが接続するテスト用サーバー
         /// </summary>
-        static TestServer server;
+        static TcpListener server;
 
         /// <summary>
         /// 最初に1度だけ実行される初期化
@@ -30,7 +32,8 @@ namespace AgiriTest
         public static void Init(TestContext testContext)
         {
             // run server
-            server = new TestServer(10000);
+            server = new TcpListener(IPAddress.Loopback, 10000);
+            server.Start();
 
             // run client
             var solutionDir = Path.GetFullPath(Directory.GetCurrentDirectory() + @"\..\..\..");
@@ -48,6 +51,12 @@ namespace AgiriTest
             clientProcess.CloseMainWindow();
         }
 
+        public static Socket ConnectToAgiri()
+        {
+            var sock = new Socket(SocketType.Stream, ProtocolType.Tcp);
+            sock.Connect("localhost", 10800);
+            return sock;
+        }
         
         /// <summary>
         /// agiriの差込用ソケットに接続できるかどうかテスト
@@ -55,29 +64,39 @@ namespace AgiriTest
         [TestMethod]
         public void TestConnect()
         {
-            var sock = new Socket(SocketType.Stream, ProtocolType.Tcp);
-            sock.Connect("localhost", 10800);
+            var sock = ConnectToAgiri();
             sock.Close();
         }
 
         /// <summary>
-        /// 外部からsendを差し込みできるかテスト
+        /// agiriと通信できるかテスト
         /// </summary>
         [TestMethod]
         public void TestInject()
         {
+            var sock = ConnectToAgiri();
+            // ping を送信
+            var sendData = new byte[] { 0x00, 0x00, 0x00, 0x00, 0x00 };
+            sock.Send(sendData);
+            // pongが返ってくるかどうか
+            var buffer = new byte[] { 0x77, 0x77, 0x77, 0x77, 0x77 };
+            var expected = new byte[] { 0x01, 0x00, 0x00, 0x00, 0x00 };
+            sock.Receive(buffer);
+            Assert.IsTrue(Enumerable.SequenceEqual(expected, buffer));
+            sock.Close();
+        }
+
+        [TestMethod]
+        public void TestListSocket()
+        {
             var sock = new Socket(SocketType.Stream, ProtocolType.Tcp);
             sock.Connect("localhost", 10800);
-            var sendData = new byte[] { 0x01, 0x00, 0x00, 0x00, 0x00 };
+            var sendData = new byte[] { 0x03, 0x00, 0x00, 0x00, 0x00 }; // 0x03: list sokcet request
             sock.Send(sendData);
             var buffer = new byte[] { 0x77, 0x77, 0x77, 0x77, 0x77 };
             sock.Receive(buffer);
-            Assert.AreEqual(0x01, buffer[0]);
-            Assert.AreEqual(0x00, buffer[1]);
-            Assert.AreEqual(0x00, buffer[2]);
-            Assert.AreEqual(0x00, buffer[3]);
-            Assert.AreEqual(0x01, buffer[4]);
-            sock.Close();
+            Assert.AreEqual(0x04, buffer[0]); // 0x04 : list socket response
+            Assert.AreEqual(1, BitConverter.ToInt32(buffer, 1));
         }
     }
 }

@@ -18,8 +18,8 @@ inline bool recvAll(const SOCKET sock, const int length, char* output)
 struct SocketInfo
 {
 	SOCKET id;
-	UINT32 host;
-	UINT16 port;
+	uint32_t host;
+	uint16_t port;
 };
 
 int getAllSockets(SocketInfo result[])
@@ -51,7 +51,7 @@ enum class MessageType: char
 
 void pongResponse(SOCKET sock)
 {
-	char pong [] = { 0x01, 0x00, 0x00, 0x00, 0x01 }; // datalen, pong
+	char pong [] = { 0x01, 0x00, 0x00, 0x00, 0x00 }; // pong datalen
 	global::original_api::send(sock, pong, sizeof(pong), 0);
 }
 
@@ -60,13 +60,13 @@ void listSocketResponse(SOCKET sock)
 	SocketInfo sockets[1024];
 	int socketCount = getAllSockets(sockets);
 
-	// dataLength
-	int dataLength = sizeof(char) + sizeof(int) + socketCount * (sizeof(SOCKET) + sizeof(UINT32) + sizeof(UINT16));
-	global::original_api::send(sock, (char*) &dataLength, sizeof(int), 0);
-
 	// action
 	MessageType listSocketResponse = MessageType::ListSocketResponse;
 	global::original_api::send(sock, (char*) &listSocketResponse, sizeof(char), 0);
+
+	// dataLength
+	int dataLength = sizeof(int) + socketCount * (sizeof(SOCKET) + sizeof(uint32_t) + sizeof(uint16_t));
+	global::original_api::send(sock, (char*) &dataLength, sizeof(int), 0);
 
 	// socketCount
 	global::original_api::send(sock, (char*) &socketCount, sizeof(int), 0);
@@ -74,14 +74,20 @@ void listSocketResponse(SOCKET sock)
 	// sockets...
 	for (int i = 0; i < socketCount++; i++) {
 		global::original_api::send(sock, (char*) &(sockets[i].id), sizeof(SOCKET), 0);
-		global::original_api::send(sock, (char*) &(sockets[i].host), sizeof(UINT32), 0);
-		global::original_api::send(sock, (char*) &(sockets[i].port), sizeof(UINT16), 0);
+		global::original_api::send(sock, (char*) &(sockets[i].host), sizeof(uint32_t), 0);
+		global::original_api::send(sock, (char*) &(sockets[i].port), sizeof(uint16_t), 0);
 	}
 }
 
 void processClient(const SOCKET sock)
 {
 	while (true) {
+		// recv message type
+		MessageType type;
+		if (!recvAll(sock, sizeof(char), (char*) &type)) {
+			break;
+		}
+
 		int dataLength = 0;
 		// recv len
 		if (!recvAll(sock, sizeof(int), reinterpret_cast<char*>(&dataLength))) {
@@ -93,7 +99,7 @@ void processClient(const SOCKET sock)
 		if (!recvAll(sock, dataLength, data)) {
 			break;
 		}
-		switch ((MessageType)data[0]) {
+		switch (type) {
 
 		case MessageType::Ping: 
 			pongResponse(sock);
