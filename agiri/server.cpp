@@ -1,3 +1,4 @@
+#include <cstdint>
 #include "global.h"
 
 SOCKET listenSocket;
