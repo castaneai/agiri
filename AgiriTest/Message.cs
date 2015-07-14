@@ -6,6 +6,7 @@
         PongResponse = 0x01,
         ListSocketRequest = 0x02,
         ListSocketResponse = 0x03,
+        InjectOutgoingPacket = 0x04,
     }
 
     public sealed class Message

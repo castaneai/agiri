@@ -87,6 +87,9 @@ namespace AgiriTest
             }
         }
 
+        /// <summary>
+        /// ソケット一覧を取得できるか
+        /// </summary>
         [TestMethod, Timeout(3000)]
         public void TestListSocket()
         {
@@ -95,6 +98,17 @@ namespace AgiriTest
                 agiriClient.Send(request);
                 var response = agiriClient.Receive();
                 Assert.AreEqual(Command.ListSocketResponse, response.Command);
+            }
+        }
+
+        [TestMethod, Timeout(3000)]
+        public void TestInjectSocket()
+        {
+            using (var agiriClient = new AgiriClient(agiriPort)) {
+                // var sockets = agiriClient.GetSockets();
+                // var targetSocket = sockets.Where(s => s.Port == testServerPort).First();
+                // agiriClient.InjectOutgoingPacket(BitConverter.GetBytes("abcdefg\n"));
+                // assert testServer.ReceiveLine() == "abcdefg"
             }
         }
     }
