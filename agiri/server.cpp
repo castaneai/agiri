@@ -3,7 +3,22 @@
 
 const int maxSocketCount = 1024;
 
+enum class Command : uint8_t
+{
+    PingRequest = 0x00,
+    PongResponse = 0x01,
+    ListSocketRequest = 0x02,
+    ListSocketResponse = 0x03,
+};
+
 #pragma pack(1)
+struct Request
+{
+    Command command;
+    uint32_t dataLength;
+    uint8_t data[0xffff];
+};
+
 struct SocketInfo
 {
     uint32_t id;
@@ -23,13 +38,6 @@ struct ListSocketResponse
 };
 #pragma pack()
 
-enum class Command : uint8_t
-{
-    PingRequest = 0x00,
-    PongResponse = 0x01,
-    ListSocketRequest = 0x02,
-    ListSocketResponse = 0x03,
-};
 
 SOCKET listenSocket;
 
@@ -98,25 +106,28 @@ void listSocketResponse(SOCKET sock)
     sendResponse(sock, Command::ListSocketResponse, (char*)&response, response.getSize());
 }
 
+bool receiveRequest(const SOCKET sock, Request& request)
+{
+    if (!recvAll(sock, sizeof(request.command), reinterpret_cast<char*>(&request.command))) {
+        return false;
+    }
+    if (!recvAll(sock, sizeof(request.dataLength), reinterpret_cast<char*>(&request.dataLength))) {
+        return false;
+    }
+    if (!recvAll(sock, request.dataLength, reinterpret_cast<char*>(request.data))) {
+        return false;
+    }
+    return true;
+}
+
 void processClient(const SOCKET sock)
 {
 	while (true) {
-		Command command;
-		if (!recvAll(sock, sizeof(command), (char*)&command)) {
-			break;
-		}
-
-		int dataLength = 0;
-		if (!recvAll(sock, sizeof(int), reinterpret_cast<char*>(&dataLength))) {
-			break;
-		}
-
-		char data[0xffff] = { 0 };
-		if (!recvAll(sock, dataLength, data)) {
-			break;
-		}
-		switch (command) {
-
+        Request request;
+        if (!receiveRequest(sock, request)) {
+            break;
+        }
+		switch (request.command) {
         case Command::PingRequest: 
 			pongResponse(sock);
 			break;
