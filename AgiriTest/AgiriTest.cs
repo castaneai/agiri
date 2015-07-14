@@ -23,16 +23,26 @@ namespace AgiriTest
         static TcpListener server;
 
         /// <summary>
+        /// テスト用サーバーの待ち受けポート番号
+        /// </summary>
+        private const UInt16 testServerPort = 10000;
+
+        /// <summary>
+        /// agiriの待ち受けポート番号
+        /// </summary>
+        private const UInt16 agiriPort = 10800;
+
+        /// <summary>
         /// 最初に1度だけ実行される初期化
         /// テスト用クライアントを起動する
         /// （テスト用クライアントは起動後自動でagiri.dllをロードする）
         /// </summary>
         /// <param name="testContext"></param>
         [ClassInitialize()]
-        public static void Init(TestContext testContext)
+        public static void ClassInitialize(TestContext testContext)
         {
             // run server
-            server = new TcpListener(IPAddress.Loopback, 10000);
+            server = new TcpListener(IPAddress.Loopback, testServerPort);
             server.Start();
 
             // run client
@@ -46,16 +56,9 @@ namespace AgiriTest
         /// テスト用クライアントを終了する
         /// </summary>
         [ClassCleanup]
-        public static void End()
+        public static void ClassCleanup()
         {
             clientProcess.CloseMainWindow();
-        }
-
-        public static Socket ConnectToAgiri()
-        {
-            var sock = new Socket(SocketType.Stream, ProtocolType.Tcp);
-            sock.Connect("localhost", 10800);
-            return sock;
         }
         
         /// <summary>
@@ -64,39 +67,35 @@ namespace AgiriTest
         [TestMethod]
         public void TestConnect()
         {
-            var sock = ConnectToAgiri();
-            sock.Close();
+            var agiriClient = new AgiriClient(agiriPort);
+            agiriClient.Close();
         }
 
         /// <summary>
         /// agiriと通信できるかテスト
         /// </summary>
-        [TestMethod]
+        [TestMethod, Timeout(3000)]
         public void TestInject()
         {
-            var sock = ConnectToAgiri();
-            // ping を送信
-            var sendData = new byte[] { 0x00, 0x00, 0x00, 0x00, 0x00 };
-            sock.Send(sendData);
-            // pongが返ってくるかどうか
-            var buffer = new byte[] { 0x77, 0x77, 0x77, 0x77, 0x77 };
-            var expected = new byte[] { 0x01, 0x00, 0x00, 0x00, 0x00 };
-            sock.Receive(buffer);
-            Assert.IsTrue(Enumerable.SequenceEqual(expected, buffer));
-            sock.Close();
+            using (var agiriClient = new AgiriClient(agiriPort)) {
+                // agiriにpingを送ったらpongが返ってくるか？
+                var pingRequest = new Message(Command.PingRequest);
+                agiriClient.Send(pingRequest);
+                var pongResponse = agiriClient.Receive();
+                Assert.AreEqual(Command.PongResponse, pongResponse.Command);
+                Assert.IsTrue(Enumerable.SequenceEqual(new byte[0], pongResponse.Data));
+            }
         }
 
         [TestMethod, Timeout(3000)]
         public void TestListSocket()
         {
-            var sock = new Socket(SocketType.Stream, ProtocolType.Tcp);
-            sock.Connect("localhost", 10800);
-            var sendData = new byte[] { 0x03, 0x00, 0x00, 0x00, 0x00 }; // 0x03: list sokcet request
-            sock.Send(sendData);
-            var buffer = new byte[] { 0x77, 0x77, 0x77, 0x77, 0x77 };
-            sock.Receive(buffer);
-            Assert.AreEqual(0x04, buffer[0]); // 0x04 : list socket response
-            Assert.AreEqual(1, BitConverter.ToInt32(buffer, 1));
+            using (var agiriClient = new AgiriClient(agiriPort)) {
+                var request = new Message(Command.ListSocketRequest);
+                agiriClient.Send(request);
+                var response = agiriClient.Receive();
+                Assert.AreEqual(Command.ListSocketResponse, response.Command);
+            }
         }
     }
 }

@@ -5,40 +5,42 @@ using System.Net.Sockets;
 
 namespace AgiriTest 
 {
-    public class TestClient : IDisposable
+    public sealed class AgiriClient : IDisposable
     {
         private readonly TcpClient tcpClient;
+        private readonly BinaryReader reader;
+        private readonly BinaryWriter writer;
 
-        private readonly StreamReader reader;
-
-        private readonly StreamWriter writer;
-
-        public TestClient(ushort serverPort)
+        public AgiriClient(ushort serverPort)
         {
             var serverEP = new IPEndPoint(IPAddress.Loopback, serverPort);
             tcpClient = new TcpClient();
             tcpClient.Connect(serverEP);
-            reader = new StreamReader(tcpClient.GetStream());
-            writer = new StreamWriter(tcpClient.GetStream());
+            reader = new BinaryReader(tcpClient.GetStream());
+            writer = new BinaryWriter(tcpClient.GetStream());
         }
 
-        public TestClient(TcpClient baseClient)
+        public AgiriClient(TcpClient baseClient)
         {
             tcpClient = baseClient;
-            reader = new StreamReader(tcpClient.GetStream());
-            writer = new StreamWriter(tcpClient.GetStream());
+            reader = new BinaryReader(tcpClient.GetStream());
+            writer = new BinaryWriter(tcpClient.GetStream());
         }
 
-        public void Send(string message)
+        public void Send(Message message)
         {
-            writer.WriteLine(message);
+            writer.Write((byte)message.Command);
+            writer.Write(BitConverter.GetBytes((Int32)message.Data.Length));
+            writer.Write(message.Data);
             writer.Flush();
         }
 
-        public string Receive()
+        public Message Receive()
         {
-            var response = reader.ReadLine();
-            return response;
+            var command = (Command)reader.ReadByte();
+            var length = reader.ReadInt32();
+            var data = reader.ReadBytes(length);
+            return new Message(command, data);
         }
 
         public void Close()
@@ -50,7 +52,7 @@ namespace AgiriTest
         #region IDisposable Support
         private bool disposedValue = false; // To detect redundant calls
 
-        protected virtual void Dispose(bool disposing)
+        private void Dispose(bool disposing)
         {
             if (!disposedValue) {
                 if (disposing) {

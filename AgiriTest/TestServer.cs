@@ -13,9 +13,9 @@ namespace AgiriTest
             listener.Start();
         }
 
-        public TestClient Accept()
+        public AgiriClient Accept()
         {
-            return new TestClient(listener.AcceptTcpClient());
+            return new AgiriClient(listener.AcceptTcpClient());
         }
     }
 }
