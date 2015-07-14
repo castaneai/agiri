@@ -4,8 +4,8 @@
     {
         PingRequest = 0x00,
         PongResponse = 0x01,
-        ListSocketRequest = 0x03,
-        ListSocketResponse = 0x04,
+        ListSocketRequest = 0x02,
+        ListSocketResponse = 0x03,
     }
 
     public sealed class Message

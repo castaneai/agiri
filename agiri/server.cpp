@@ -1,6 +1,36 @@
 #include <cstdint>
 #include "global.h"
 
+const int maxSocketCount = 1024;
+
+#pragma pack(1)
+struct SocketInfo
+{
+    uint32_t id;
+    uint32_t host;
+    uint16_t port;
+};
+
+struct ListSocketResponse
+{
+    uint32_t socketCount;
+    SocketInfo sockets[maxSocketCount];
+
+    uint32_t getSize() const
+    {
+        return sizeof(uint32_t) + sizeof(SocketInfo) * socketCount;
+    }
+};
+#pragma pack()
+
+enum class Command : uint8_t
+{
+    PingRequest = 0x00,
+    PongResponse = 0x01,
+    ListSocketRequest = 0x02,
+    ListSocketResponse = 0x03,
+};
+
 SOCKET listenSocket;
 
 inline bool recvAll(const SOCKET sock, const int length, char* output)
@@ -16,97 +46,82 @@ inline bool recvAll(const SOCKET sock, const int length, char* output)
 	return true;
 }
 
-struct SocketInfo
+inline bool sendAll(const SOCKET sock, const int length, char* data)
 {
-	SOCKET id;
-	uint32_t host;
-	uint16_t port;
-};
+    int sent = 0;
+    while (sent < length) {
+        int result = global::original_api::send(sock, data + sent, length - sent, 0);
+        if (result < 1) {
+            return false;
+        }
+        sent += result;
+    }
+    return true;
+}
 
 int getAllSockets(SocketInfo result[])
 {
 	int socketCount = 0;
-	for (int i = 1; i <= 1024; i++) {
+	for (int i = 1; i <= maxSocketCount; i++) {
 		int option;
 		int len = sizeof(option);
-		if (getsockopt((SOCKET) i, SOL_SOCKET, SO_TYPE, reinterpret_cast<char*>(&option), &len) == 0) {
-			result[socketCount].id = i;
+		if (getsockopt((SOCKET)i, SOL_SOCKET, SO_TYPE, reinterpret_cast<char*>(&option), &len) != SOCKET_ERROR) {
 			sockaddr_in addr;
-			int addrLen;
-			getpeername(i, reinterpret_cast<sockaddr*>(&addr), &addrLen);
-			result[socketCount].host = (UINT32)(addr.sin_addr.S_un.S_addr);
-			result[socketCount].port = ntohs(addr.sin_port);
-			socketCount++;
+			int addrLen = sizeof(addr);
+            if (getpeername((SOCKET)i, reinterpret_cast<sockaddr*>(&addr), &addrLen) != SOCKET_ERROR) {
+			    result[socketCount].id = i;
+                result[socketCount].host = (uint32_t)(addr.sin_addr.S_un.S_addr);
+                result[socketCount].port = ntohs(addr.sin_port);
+                socketCount++;
+            }
 		}
 	}
 	return socketCount;
 }
 
-enum class MessageType: char
+void sendResponse(const SOCKET sock, Command command, char* data, uint32_t dataLength)
 {
-	Ping = 0x00,
-	PingResponse = 0x01,
-	ListSocket = 0x02,
-	ListSocketResponse = 0x03,
-};
+    sendAll(sock, sizeof(command), reinterpret_cast<char*>(&command));
+    sendAll(sock, sizeof(dataLength), reinterpret_cast<char*>(&dataLength));
+    sendAll(sock, dataLength, data);
+}
 
 void pongResponse(SOCKET sock)
 {
-	char pong [] = { 0x01, 0x00, 0x00, 0x00, 0x00 }; // pong datalen
-	global::original_api::send(sock, pong, sizeof(pong), 0);
+    sendResponse(sock, Command::PongResponse, nullptr, 0);
 }
 
 void listSocketResponse(SOCKET sock)
 {
-	SocketInfo sockets[1024];
-	int socketCount = getAllSockets(sockets);
-
-	// action
-	MessageType listSocketResponse = MessageType::ListSocketResponse;
-	global::original_api::send(sock, (char*) &listSocketResponse, sizeof(char), 0);
-
-	// dataLength
-	int dataLength = sizeof(int) + socketCount * (sizeof(SOCKET) + sizeof(uint32_t) + sizeof(uint16_t));
-	global::original_api::send(sock, (char*) &dataLength, sizeof(int), 0);
-
-	// socketCount
-	global::original_api::send(sock, (char*) &socketCount, sizeof(int), 0);
-
-	// sockets...
-	for (int i = 0; i < socketCount++; i++) {
-		global::original_api::send(sock, (char*) &(sockets[i].id), sizeof(SOCKET), 0);
-		global::original_api::send(sock, (char*) &(sockets[i].host), sizeof(uint32_t), 0);
-		global::original_api::send(sock, (char*) &(sockets[i].port), sizeof(uint16_t), 0);
-	}
+    ListSocketResponse response;
+	response.socketCount = getAllSockets(response.sockets);
+    sendResponse(sock, Command::ListSocketResponse, (char*)&response, response.getSize());
 }
 
 void processClient(const SOCKET sock)
 {
 	while (true) {
-		// recv message type
-		MessageType type;
-		if (!recvAll(sock, sizeof(char), (char*) &type)) {
+		Command command;
+		if (!recvAll(sock, sizeof(command), (char*)&command)) {
 			break;
 		}
 
 		int dataLength = 0;
-		// recv len
 		if (!recvAll(sock, sizeof(int), reinterpret_cast<char*>(&dataLength))) {
 			break;
 		}
 
-		// recv data
 		char data[0xffff] = { 0 };
 		if (!recvAll(sock, dataLength, data)) {
 			break;
 		}
-		switch (type) {
+		switch (command) {
 
-		case MessageType::Ping: 
+        case Command::PingRequest: 
 			pongResponse(sock);
 			break;
 
-		case MessageType::ListSocket:
+        case Command::ListSocketRequest:
 			listSocketResponse(sock);
 			break;
 		}

@@ -34,9 +34,10 @@ int main(void)
 		wait_key();
 		return -1;
 	}
+    printf("socket connected. socket_id: %d\n", (int)s);
 
-	wait_key();
-
-	cout << "client closed." << endl;
+    while (true) {
+        Sleep(1000);
+    }
 	return 0;
 }
