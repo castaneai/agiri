@@ -55,12 +55,6 @@
     <Compile Include="Properties\AssemblyInfo.cs" />
     <Compile Include="TestServer.cs" />
   </ItemGroup>
-  <ItemGroup>
-    <ProjectReference Include="..\TestServer\TestServer.csproj">
-      <Project>{83c819eb-3400-4b6a-abf4-2d2e2dae130b}</Project>
-      <Name>TestServer</Name>
-    </ProjectReference>
-  </ItemGroup>
   <Choose>
     <When Condition="'$(VisualStudioVersion)' == '10.0' And '$(IsCodedUITest)' == 'True'">
       <ItemGroup>
