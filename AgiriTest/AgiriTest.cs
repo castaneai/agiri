@@ -86,7 +86,7 @@ namespace AgiriTest
             sock.Close();
         }
 
-        [TestMethod]
+        [TestMethod, Timeout(3000)]
         public void TestListSocket()
         {
             var sock = new Socket(SocketType.Stream, ProtocolType.Tcp);
