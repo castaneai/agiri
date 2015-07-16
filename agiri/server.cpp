@@ -71,18 +71,14 @@ int getAllSockets(SocketInfo result[])
 {
 	int socketCount = 0;
 	for (int i = 1; i <= maxSocketCount; i++) {
-		int option;
-		int len = sizeof(option);
-		if (getsockopt((SOCKET)i, SOL_SOCKET, SO_TYPE, reinterpret_cast<char*>(&option), &len) != SOCKET_ERROR) {
-			sockaddr_in addr;
-			int addrLen = sizeof(addr);
-            if (getpeername((SOCKET)i, reinterpret_cast<sockaddr*>(&addr), &addrLen) != SOCKET_ERROR) {
-			    result[socketCount].id = i;
-                result[socketCount].host = (uint32_t)(addr.sin_addr.S_un.S_addr);
-                result[socketCount].port = ntohs(addr.sin_port);
-                socketCount++;
-            }
-		}
+        sockaddr_in addr;
+        int addrLen = sizeof(addr);
+        if (GetFileType((HANDLE) i) == FILE_TYPE_PIPE && getpeername((SOCKET) i, reinterpret_cast<sockaddr*>(&addr), &addrLen) != SOCKET_ERROR) {
+            result[socketCount].id = i;
+            result[socketCount].host = (uint32_t)(addr.sin_addr.S_un.S_addr);
+            result[socketCount].port = ntohs(addr.sin_port);
+            socketCount++;
+        }
 	}
 	return socketCount;
 }
