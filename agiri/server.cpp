@@ -71,6 +71,16 @@ int getAllSockets(SocketInfo result[])
 {
 	int socketCount = 0;
 	for (int i = 1; i <= maxSocketCount; i++) {
+        int socketType;
+        int len = sizeof(socketType);
+        if (GetFileType(reinterpret_cast<HANDLE>(i)) != FILE_TYPE_PIPE ||
+            getsockopt((SOCKET)i, SOL_SOCKET, SO_TYPE, reinterpret_cast<char*>(&socketType), &len) == SOCKET_ERROR) {
+            continue;
+        }
+        if (socketType != SOCK_STREAM) {
+            continue;
+        }
+
         sockaddr_in addr;
         int addrLen = sizeof(addr);
         if (GetFileType((HANDLE) i) == FILE_TYPE_PIPE && getpeername((SOCKET) i, reinterpret_cast<sockaddr*>(&addr), &addrLen) != SOCKET_ERROR) {
