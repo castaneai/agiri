@@ -4,6 +4,7 @@ using System.Diagnostics;
 using System.IO;
 using System.Net;
 using System.Net.Sockets;
+using System.Text;
 using Microsoft.VisualStudio.TestTools.UnitTesting;
 
 namespace AgiriTest
@@ -15,50 +16,27 @@ namespace AgiriTest
         /// クライアント側(agiri.dllを差し込む側)
         /// DLLを差し込むので，外部プロセスとして起動する
         /// </summary>
-        static Process clientProcess;
+        private static Process clientProcess;
 
-        /// <summary>
-        /// テスト用のクライアントが接続するテスト用サーバー
-        /// </summary>
-        static TcpListener server;
+        private TcpListener testServer;
 
-        /// <summary>
-        /// テスト用サーバーの待ち受けポート番号
-        /// </summary>
-        private const UInt16 testServerPort = 10000;
-
-        /// <summary>
-        /// agiriの待ち受けポート番号
-        /// </summary>
         private const UInt16 agiriPort = 10800;
 
-        /// <summary>
-        /// 最初に1度だけ実行される初期化
-        /// テスト用クライアントを起動する
-        /// （テスト用クライアントは起動後自動でagiri.dllをロードする）
-        /// </summary>
-        /// <param name="testContext"></param>
-        [ClassInitialize()]
-        public static void ClassInitialize(TestContext testContext)
+        [TestInitialize]
+        public void Startup()
         {
-            // run server
-            server = new TcpListener(IPAddress.Loopback, testServerPort);
-            server.Start();
-
-            // run client
+            testServer = new TcpListener(new IPEndPoint(IPAddress.Loopback, 10000));
+            testServer.Start();
             var solutionDir = Path.GetFullPath(Directory.GetCurrentDirectory() + @"\..\..\..");
             var clientPath = solutionDir + @"\Debug\TestClient.exe";
             clientProcess = Process.Start(clientPath);
         }
-
-        /// <summary>
-        /// 最後に1度だけ実行される処理
-        /// テスト用クライアントを終了する
-        /// </summary>
-        [ClassCleanup]
-        public static void ClassCleanup()
+        
+        [TestCleanup]
+        public void Cleanup()
         {
             clientProcess.CloseMainWindow();
+            testServer.Stop();
         }
         
         /// <summary>
@@ -72,7 +50,7 @@ namespace AgiriTest
         }
 
         /// <summary>
-        /// agiriと通信できるかテスト
+        /// agiriと通信できるかテスト (ping-pong)
         /// </summary>
         [TestMethod, Timeout(3000)]
         public void TestInject()
@@ -90,25 +68,25 @@ namespace AgiriTest
         /// <summary>
         /// ソケット一覧を取得できるか
         /// </summary>
-        [TestMethod, Timeout(3000)]
+        [TestMethod]
         public void TestListSocket()
         {
             using (var agiriClient = new AgiriClient(agiriPort)) {
-                var request = new Message(Command.ListSocketRequest);
-                agiriClient.Send(request);
-                var response = agiriClient.Receive();
-                Assert.AreEqual(Command.ListSocketResponse, response.Command);
+                var sockets = agiriClient.GetAllSockets();
             }
         }
 
-        [TestMethod, Timeout(3000)]
+        [TestMethod]
         public void TestInjectSocket()
         {
+            var testClientConn = testServer.AcceptTcpClient();
             using (var agiriClient = new AgiriClient(agiriPort)) {
-                // var sockets = agiriClient.GetSockets();
-                // var targetSocket = sockets.Where(s => s.Port == testServerPort).First();
-                // agiriClient.InjectOutgoingPacket(BitConverter.GetBytes("abcdefg\n"));
-                // assert testServer.ReceiveLine() == "abcdefg"
+                var sockets = agiriClient.GetAllSockets().Where(si => si.EndPoint.Port == 10000).ToList();
+                var targetSocket = sockets.First();
+                agiriClient.InjectOutgoingPacket(targetSocket.SocketID, Encoding.ASCII.GetBytes("abcdefg\n"));
+                var injectedPacketReader = new StreamReader(testClientConn.GetStream());
+                var injectedPacket = injectedPacketReader.ReadLine();
+                Assert.AreEqual("abcdefg", injectedPacket);
             }
         }
     }

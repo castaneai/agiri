@@ -12,6 +12,31 @@ void wait_key()
 	cin >> temp;
 }
 
+inline bool recvAll(const SOCKET sock, const int length, char* output)
+{
+    int receivedLength = 0;
+    while (receivedLength < length) {
+        int result = recv(sock, output + receivedLength, length - receivedLength, 0);
+        if (result < 1) {
+            return false;
+        }
+        receivedLength += result;
+    }
+    return true;
+}
+inline bool sendAll(const SOCKET sock, const int length, char* data)
+{
+    int sent = 0;
+    while (sent < length) {
+        int result = send(sock, data + sent, length - sent, 0);
+        if (result < 1) {
+            return false;
+        }
+        sent += result;
+    }
+    return true;
+}
+
 int main(void)
 {
 	WSADATA data;
@@ -37,7 +62,14 @@ int main(void)
     printf("socket connected. socket_id: %d\n", (int)s);
 
     while (true) {
-        Sleep(1000);
+        char mes[1024];
+        cout << "send: " << endl;
+        cin >> mes;
+        int len = strlen(mes);
+        mes[len] = '\n';
+        sendAll(s, len + 1, mes);
+        int recvLen = recv(s, mes, 1024, 0);
+        cout << "recv: " << mes << endl;
     }
 	return 0;
 }

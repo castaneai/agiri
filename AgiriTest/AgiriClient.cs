@@ -1,10 +1,18 @@
 ﻿using System;
+using System.Collections.Generic;
+using System.Linq;
 using System.IO;
 using System.Net;
 using System.Net.Sockets;
 
 namespace AgiriTest 
 {
+    public class SocketInfo
+    {
+        public int SocketID { get; set; }
+        public IPEndPoint EndPoint { get; set; }
+    }
+
     public sealed class AgiriClient : IDisposable
     {
         private readonly TcpClient tcpClient;
@@ -47,6 +55,30 @@ namespace AgiriTest
         {
             reader.Close();
             writer.Close();
+        }
+
+        public IList<SocketInfo> GetAllSockets()
+        {
+            var result = new List<SocketInfo>();
+            var request = new Message(Command.ListSocketRequest);
+            Send(request);
+            var response = Receive();
+            var reader = new BinaryReader(new MemoryStream(response.Data));
+            var socketCount = reader.ReadInt32();
+            for (var i = 0; i < socketCount; i++) {
+                var socketID = reader.ReadInt32();
+                var ip = new IPAddress(reader.ReadInt32());
+                var port = reader.ReadUInt16();
+                result.Add(new SocketInfo { SocketID = socketID, EndPoint = new IPEndPoint(ip, port) });
+            }
+            return result;
+        }
+
+        public void InjectOutgoingPacket(int targetSocketID, byte[] packetData)
+        {
+            var data = BitConverter.GetBytes(targetSocketID).Concat(BitConverter.GetBytes(packetData.Length)).Concat(packetData).ToArray();
+            var request = new Message(Command.InjectOutgoingPacket, data);
+            Send(request);
         }
 
         #region IDisposable Support

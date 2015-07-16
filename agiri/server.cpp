@@ -2,6 +2,7 @@
 #include "global.h"
 
 const int maxSocketCount = 1024;
+const int maxDataSize = 0xffff;
 
 enum class Command : uint8_t
 {
@@ -9,6 +10,7 @@ enum class Command : uint8_t
     PongResponse = 0x01,
     ListSocketRequest = 0x02,
     ListSocketResponse = 0x03,
+    InjectOutgoingPacketRequest = 0x04,
 };
 
 #pragma pack(1)
@@ -16,7 +18,7 @@ struct Request
 {
     Command command;
     uint32_t dataLength;
-    uint8_t data[0xffff];
+    uint8_t data[maxDataSize];
 };
 
 struct SocketInfo
@@ -35,6 +37,13 @@ struct ListSocketResponse
     {
         return sizeof(uint32_t) + sizeof(SocketInfo) * socketCount;
     }
+};
+
+struct InjectOutgoingPacketRequest
+{
+    SOCKET targetSocket;
+    uint32_t packetSize;
+    uint8_t packetData[maxDataSize];
 };
 #pragma pack()
 
@@ -74,16 +83,14 @@ int getAllSockets(SocketInfo result[])
         int socketType;
         int len = sizeof(socketType);
         if (GetFileType(reinterpret_cast<HANDLE>(i)) != FILE_TYPE_PIPE ||
-            getsockopt((SOCKET)i, SOL_SOCKET, SO_TYPE, reinterpret_cast<char*>(&socketType), &len) == SOCKET_ERROR) {
-            continue;
-        }
-        if (socketType != SOCK_STREAM) {
+            getsockopt((SOCKET)i, SOL_SOCKET, SO_TYPE, reinterpret_cast<char*>(&socketType), &len) == SOCKET_ERROR ||
+            socketType != SOCK_STREAM) {
             continue;
         }
 
         sockaddr_in addr;
         int addrLen = sizeof(addr);
-        if (GetFileType((HANDLE) i) == FILE_TYPE_PIPE && getpeername((SOCKET) i, reinterpret_cast<sockaddr*>(&addr), &addrLen) != SOCKET_ERROR) {
+        if (getpeername((SOCKET) i, reinterpret_cast<sockaddr*>(&addr), &addrLen) != SOCKET_ERROR) {
             result[socketCount].id = i;
             result[socketCount].host = (uint32_t)(addr.sin_addr.S_un.S_addr);
             result[socketCount].port = ntohs(addr.sin_port);
@@ -110,6 +117,12 @@ void listSocketResponse(SOCKET sock)
     ListSocketResponse response;
 	response.socketCount = getAllSockets(response.sockets);
     sendResponse(sock, Command::ListSocketResponse, (char*)&response, response.getSize());
+}
+
+void injectOutgoingPacket(const InjectOutgoingPacketRequest& request)
+{
+    char* packetDataAddress = reinterpret_cast<char*>(const_cast<uint8_t*>(request.packetData));
+    sendAll(request.targetSocket, request.packetSize, packetDataAddress);
 }
 
 bool receiveRequest(const SOCKET sock, Request& request)
@@ -141,6 +154,10 @@ void processClient(const SOCKET sock)
         case Command::ListSocketRequest:
 			listSocketResponse(sock);
 			break;
+
+        case Command::InjectOutgoingPacketRequest:
+            injectOutgoingPacket(reinterpret_cast<const InjectOutgoingPacketRequest&>(request.data));
+            break;
 		}
 	}
 }
