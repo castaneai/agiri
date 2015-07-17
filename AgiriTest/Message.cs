@@ -7,6 +7,8 @@
         ListSocketRequest = 0x02,
         ListSocketResponse = 0x03,
         InjectOutgoingPacket = 0x04,
+        SwitchSniffIncomingPacketRequest = 0x05,
+        IncomingPacketResponse = 0x06,
     }
 
     public sealed class Message

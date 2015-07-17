@@ -45,7 +45,7 @@ namespace AgiriTest
         [TestMethod]
         public void TestConnect()
         {
-            var agiriClient = new AgiriClient(agiriPort);
+            var agiriClient = new Sniffer(agiriPort);
             agiriClient.Close();
         }
 
@@ -55,7 +55,7 @@ namespace AgiriTest
         [TestMethod, Timeout(3000)]
         public void TestNinjaConnection()
         {
-            using (var agiriClient = new AgiriClient(agiriPort)) {
+            using (var agiriClient = new Sniffer(agiriPort)) {
                 // agiriにpingを送ったらpongが返ってくるか？
                 var pingRequest = new Message(Command.PingRequest);
                 agiriClient.Send(pingRequest);
@@ -71,22 +71,43 @@ namespace AgiriTest
         [TestMethod]
         public void TestListSocket()
         {
-            using (var agiriClient = new AgiriClient(agiriPort)) {
+            using (var agiriClient = new Sniffer(agiriPort)) {
                 var sockets = agiriClient.GetAllSockets();
             }
         }
 
+        /// <summary>
+        /// snifferからsendパケットを差し込むことができるか
+        /// </summary>
         [TestMethod]
-        public void TestInjectSocket()
+        public void TestInjectOutgoingPacket()
         {
             var testClientConn = testServer.AcceptTcpClient();
-            using (var agiriClient = new AgiriClient(agiriPort)) {
+            using (var agiriClient = new Sniffer(agiriPort)) {
                 var sockets = agiriClient.GetAllSockets().Where(si => si.EndPoint.Port == 10000).ToList();
                 var targetSocket = sockets.First();
                 agiriClient.InjectOutgoingPacket(targetSocket.SocketID, Encoding.ASCII.GetBytes("abcdefg\n"));
                 var injectedPacketReader = new StreamReader(testClientConn.GetStream());
                 var injectedPacket = injectedPacketReader.ReadLine();
                 Assert.AreEqual("abcdefg", injectedPacket);
+            }
+        }
+
+        /// <summary>
+        /// recvパケットをsnifferに横流しできるか
+        /// </summary>
+        [TestMethod]
+        public void TestSniffIncomingPacket()
+        {
+            var testClientConn = testServer.AcceptTcpClient();
+            using (var sniffer = new Sniffer(agiriPort)) {
+                var targetSocket = sniffer.GetAllSockets().Where(si => si.EndPoint.Port == 10000).First();
+                sniffer.StartSniffIncomingPacket(targetSocket.SocketID);
+                var writer = new StreamWriter(testClientConn.GetStream());
+                writer.WriteLine("received...!\n");
+                writer.Flush();
+                var received = sniffer.ReceiveSniffedIncomingPacket(targetSocket.SocketID);
+                Assert.AreEqual("received...!\n", Encoding.ASCII.GetString(received));
             }
         }
     }

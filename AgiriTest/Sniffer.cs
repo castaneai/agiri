@@ -13,13 +13,13 @@ namespace AgiriTest
         public IPEndPoint EndPoint { get; set; }
     }
 
-    public sealed class AgiriClient : IDisposable
+    public sealed class Sniffer : IDisposable
     {
         private readonly TcpClient tcpClient;
         private readonly BinaryReader reader;
         private readonly BinaryWriter writer;
 
-        public AgiriClient(ushort serverPort)
+        public Sniffer(ushort serverPort)
         {
             var serverEP = new IPEndPoint(IPAddress.Loopback, serverPort);
             tcpClient = new TcpClient();
@@ -28,7 +28,7 @@ namespace AgiriTest
             writer = new BinaryWriter(tcpClient.GetStream());
         }
 
-        public AgiriClient(TcpClient baseClient)
+        public Sniffer(TcpClient baseClient)
         {
             tcpClient = baseClient;
             reader = new BinaryReader(tcpClient.GetStream());
@@ -79,6 +79,33 @@ namespace AgiriTest
             var data = BitConverter.GetBytes(targetSocketID).Concat(BitConverter.GetBytes(packetData.Length)).Concat(packetData).ToArray();
             var request = new Message(Command.InjectOutgoingPacket, data);
             Send(request);
+        }
+
+        private void switchSniffIncomingPacket(int targetSocketID, bool state)
+        {
+            var data = BitConverter.GetBytes(targetSocketID).Concat(
+                BitConverter.GetBytes((byte)(state ? 1 : 0))).ToArray();
+            var request = new Message(Command.SwitchSniffIncomingPacketRequest, data);
+        }
+
+        public void StartSniffIncomingPacket(int targetSocketID)
+        {
+            switchSniffIncomingPacket(targetSocketID, true);
+        }
+
+        public void StopSniffIncomingPacket(int targetSocketID)
+        {
+            switchSniffIncomingPacket(targetSocketID, false);
+        }
+
+        public byte[] ReceiveSniffedIncomingPacket(int targetSocketID)
+        {
+            while (true) {
+                var mes = Receive();
+                if (BitConverter.ToUInt32(mes.Data, 0) != targetSocketID) continue;
+                var packetSize = BitConverter.ToUInt32(mes.Data, 4);
+                return mes.Data.Skip(8).ToArray();
+            }
         }
 
         #region IDisposable Support
