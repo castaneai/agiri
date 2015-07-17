@@ -22,7 +22,7 @@ void NinjaConnection::send(const Command& command, const byte_t* const data, con
 
 void NinjaConnection::send(const Message& message) const
 {
-    sendAll(reinterpret_cast<const uint8_t*>(&message), message.getSize());
+    sendAll(reinterpret_cast<const byte_t*>(&message), message.getSize());
 }
 
 void NinjaConnection::receive(Message& message) const
@@ -36,7 +36,7 @@ inline bool NinjaConnection::sendAll(const byte_t* const output, const uint32_t&
 {
     uint32_t sent = 0;
     while (sent < size) {
-        int result = global::original_api::send(m_sock, reinterpret_cast<char*>(const_cast<uint8_t*>(output)) + sent, size - sent, 0);
+        int result = global::original_api::send(m_sock, reinterpret_cast<char*>(const_cast<byte_t*>(output)) + sent, size - sent, 0);
         if (result < 1) return false;
         sent += result;
     }

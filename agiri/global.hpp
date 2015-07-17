@@ -15,10 +15,6 @@ using SendFunc = int (WINAPI*) (SOCKET socket, char* sendBuffer, int sendLength,
 using ConnectFunc = int (WINAPI*) (SOCKET socket, const sockaddr* address, int addressLength);
 
 namespace global {
-
-	// 対象となるソケット
-	__declspec(selectany) SOCKET targetSocket = INVALID_SOCKET;
-
 	// フックしたWinsockの元の関数
 	namespace original_api {
 		__declspec(selectany) RecvFunc recv;
