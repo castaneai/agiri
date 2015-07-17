@@ -1,202 +1,56 @@
-#include <cstdint>
-#include "global.h"
+#include "precompiled_header.hpp"
+#include "NinjaConnection.hpp"
+#include "RequestHandler.hpp"
 
-const int maxSocketCount = 1024;
-const int maxDataSize = 0xffff;
-
-enum class Command : uint8_t
+namespace
 {
-    PingRequest = 0x00,
-    PongResponse = 0x01,
-    ListSocketRequest = 0x02,
-    ListSocketResponse = 0x03,
-    InjectOutgoingPacketRequest = 0x04,
-};
+    SOCKET listenSocket;
 
-#pragma pack(1)
-struct Request
-{
-    Command command;
-    uint32_t dataLength;
-    uint8_t data[maxDataSize];
-};
-
-struct SocketInfo
-{
-    uint32_t id;
-    uint32_t host;
-    uint16_t port;
-};
-
-struct ListSocketResponse
-{
-    uint32_t socketCount;
-    SocketInfo sockets[maxSocketCount];
-
-    uint32_t getSize() const
+    void onAcceptSniffer(const socket_t snifferSock)
     {
-        return sizeof(uint32_t) + sizeof(SocketInfo) * socketCount;
-    }
-};
-
-struct InjectOutgoingPacketRequest
-{
-    SOCKET targetSocket;
-    uint32_t packetSize;
-    uint8_t packetData[maxDataSize];
-};
-#pragma pack()
-
-
-SOCKET listenSocket;
-
-inline bool recvAll(const SOCKET sock, const int length, char* output)
-{
-	int receivedLength = 0;
-	while (receivedLength < length) {
-		int result = global::original_api::recv(sock, output + receivedLength, length - receivedLength, 0);
-		if (result < 1) {
-			return false;
-		}
-		receivedLength += result;
-	}
-	return true;
-}
-
-inline bool sendAll(const SOCKET sock, const int length, char* data)
-{
-    int sent = 0;
-    while (sent < length) {
-        int result = global::original_api::send(sock, data + sent, length - sent, 0);
-        if (result < 1) {
-            return false;
+        NinjaConnection conn(snifferSock);
+        RequestHandler handler(conn);
+        while (true) {
+            Message mes;
+            conn.receive(mes);
+            handler.handle(mes);
         }
-        sent += result;
     }
-    return true;
-}
 
-int getAllSockets(SocketInfo result[])
-{
-	int socketCount = 0;
-	for (int i = 1; i <= maxSocketCount; i++) {
-        int socketType;
-        int len = sizeof(socketType);
-        if (GetFileType(reinterpret_cast<HANDLE>(i)) != FILE_TYPE_PIPE ||
-            getsockopt((SOCKET)i, SOL_SOCKET, SO_TYPE, reinterpret_cast<char*>(&socketType), &len) == SOCKET_ERROR ||
-            socketType != SOCK_STREAM) {
-            continue;
+    DWORD WINAPI acceptSnifferThreadFunc(LPVOID)
+    {
+        while (true) {
+            sockaddr_in snifferAddress = { 0 };
+            int snifferAddressLength = sizeof(snifferAddress);
+            auto acceptedSnifferSock = accept(listenSocket, reinterpret_cast<sockaddr*>(&snifferAddress), &snifferAddressLength);
+            if (acceptedSnifferSock != INVALID_SOCKET) {
+                // TODO: accept multi sniffer
+                onAcceptSniffer(acceptedSnifferSock);
+            }
         }
-
-        sockaddr_in addr;
-        int addrLen = sizeof(addr);
-        if (getpeername((SOCKET) i, reinterpret_cast<sockaddr*>(&addr), &addrLen) != SOCKET_ERROR) {
-            result[socketCount].id = i;
-            result[socketCount].host = (uint32_t)(addr.sin_addr.S_un.S_addr);
-            result[socketCount].port = ntohs(addr.sin_port);
-            socketCount++;
-        }
-	}
-	return socketCount;
-}
-
-void sendResponse(const SOCKET sock, Command command, char* data, uint32_t dataLength)
-{
-    sendAll(sock, sizeof(command), reinterpret_cast<char*>(&command));
-    sendAll(sock, sizeof(dataLength), reinterpret_cast<char*>(&dataLength));
-    sendAll(sock, dataLength, data);
-}
-
-void pongResponse(SOCKET sock)
-{
-    sendResponse(sock, Command::PongResponse, nullptr, 0);
-}
-
-void listSocketResponse(SOCKET sock)
-{
-    ListSocketResponse response;
-	response.socketCount = getAllSockets(response.sockets);
-    sendResponse(sock, Command::ListSocketResponse, (char*)&response, response.getSize());
-}
-
-void injectOutgoingPacket(const InjectOutgoingPacketRequest& request)
-{
-    char* packetDataAddress = reinterpret_cast<char*>(const_cast<uint8_t*>(request.packetData));
-    sendAll(request.targetSocket, request.packetSize, packetDataAddress);
-}
-
-bool receiveRequest(const SOCKET sock, Request& request)
-{
-    if (!recvAll(sock, sizeof(request.command), reinterpret_cast<char*>(&request.command))) {
-        return false;
     }
-    if (!recvAll(sock, sizeof(request.dataLength), reinterpret_cast<char*>(&request.dataLength))) {
-        return false;
+
+    socket_t createListenSocket(const char* const& listenIPAddress, const unsigned short& listenPort)
+    {
+        auto sock = socket(AF_INET, SOCK_STREAM, IPPROTO_TCP);
+        sockaddr_in listenAddress;
+        listenAddress.sin_family = AF_INET;
+        listenAddress.sin_addr.S_un.S_addr = inet_addr(listenIPAddress);
+        listenAddress.sin_port = htons(listenPort);
+        bind(sock, reinterpret_cast<sockaddr*>(&listenAddress), sizeof(listenAddress));
+        listen(sock, 5);
+        return sock;
     }
-    if (!recvAll(sock, request.dataLength, reinterpret_cast<char*>(request.data))) {
-        return false;
-    }
-    return true;
 }
 
-void processClient(const SOCKET sock)
+void startServer(const char* const& listenIPAddress, const unsigned short& listenPort)
 {
-	while (true) {
-        Request request;
-        if (!receiveRequest(sock, request)) {
-            break;
-        }
-		switch (request.command) {
-        case Command::PingRequest: 
-			pongResponse(sock);
-			break;
+    // winsock 初期化
+    // winsockを使用するプロセスが対象のはずだから，わざわざ初期化する必要なしと思うが，
+    // Injectのタイミングがすっごい早かったら必要かもしれないし，一応初期化はしておこう
+    WSADATA d;
+    WSAStartup(MAKEWORD(2, 0), &d);
 
-        case Command::ListSocketRequest:
-			listSocketResponse(sock);
-			break;
-
-        case Command::InjectOutgoingPacketRequest:
-            injectOutgoingPacket(reinterpret_cast<const InjectOutgoingPacketRequest&>(request.data));
-            break;
-		}
-	}
-}
-
-DWORD WINAPI threadFunc(LPVOID)
-{
-	while (true) {
-		sockaddr_in clientAddress = { 0 };
-		int clientAddressLength = sizeof(clientAddress);
-		SOCKET newClient = accept(listenSocket, (sockaddr*) &clientAddress, &clientAddressLength);
-		if (newClient != INVALID_SOCKET) {
-			processClient(newClient);
-		}
-	}
-}
-
-SOCKET prepareServer(const char* listenIpAddress, const unsigned short listenPort)
-{
-	// winsock 初期化
-	// winsockを使用するプロセスが対象のはずだから，わざわざ初期化する必要なしと思うが，
-	// Injectのタイミングがすっごい早かったら必要かもしれないし，一応初期化はしておこう
-	WSADATA d;
-	WSAStartup(MAKEWORD(2, 0), &d);
-
-	// サーバー用ソケット作成
-	SOCKET sock = socket(AF_INET, SOCK_STREAM, IPPROTO_TCP);
-	sockaddr_in server_address;
-	server_address.sin_family = AF_INET;
-	server_address.sin_addr.S_un.S_addr = inet_addr(listenIpAddress);
-	server_address.sin_port = htons(listenPort);
-	bind(sock, (sockaddr*) &server_address, sizeof(server_address));
-	listen(sock, 5);
-
-	return sock;
-}
-
-void StartServer(const char* host, const unsigned short port)
-{
-	listenSocket = prepareServer(host, port);
-	// start server on new-thread.
-	QueueUserWorkItem(threadFunc, nullptr, 0);
+    listenSocket = createListenSocket(listenIPAddress, listenPort);
+    QueueUserWorkItem(acceptSnifferThreadFunc, nullptr, 0);
 }

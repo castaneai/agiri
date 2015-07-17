@@ -48,11 +48,11 @@
   </PropertyGroup>
   <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">
     <ClCompile>
-      <PrecompiledHeader>
-      </PrecompiledHeader>
+      <PrecompiledHeader>Use</PrecompiledHeader>
       <WarningLevel>Level3</WarningLevel>
       <Optimization>Disabled</Optimization>
       <PreprocessorDefinitions>WIN32;_DEBUG;_WINDOWS;_USRDLL;AGIRI_EXPORTS;%(PreprocessorDefinitions)</PreprocessorDefinitions>
+      <PrecompiledHeaderFile>precompiled_header.hpp</PrecompiledHeaderFile>
     </ClCompile>
     <Link>
       <SubSystem>Windows</SubSystem>
@@ -79,10 +79,22 @@
   <ItemGroup>
     <ClCompile Include="hook.cpp" />
     <ClCompile Include="dllmain.cpp" />
+    <ClCompile Include="NinjaConnection.cpp" />
+    <ClCompile Include="precompiled_header.cpp">
+      <PrecompiledHeader Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">Create</PrecompiledHeader>
+    </ClCompile>
+    <ClCompile Include="RequestHandler.cpp" />
     <ClCompile Include="server.cpp" />
+    <ClCompile Include="SocketHelper.cpp" />
   </ItemGroup>
   <ItemGroup>
-    <ClInclude Include="global.h" />
+    <ClInclude Include="precompiled_header.hpp" />
+    <ClInclude Include="SocketHelper.hpp" />
+    <ClInclude Include="types.hpp" />
+    <ClInclude Include="global.hpp" />
+    <ClInclude Include="messages.hpp" />
+    <ClInclude Include="NinjaConnection.hpp" />
+    <ClInclude Include="RequestHandler.hpp" />
   </ItemGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />
   <ImportGroup Label="ExtensionTargets">

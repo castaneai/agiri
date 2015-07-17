@@ -6,8 +6,7 @@
 // Ú×‚Í http://msdn.microsoft.com/ja-jp/library/5tkz6s71.aspx
 
 #pragma once
-#include <WinSock2.h>
-#include <functional>
+#include "precompiled_header.hpp"
 
 // C++11‚©‚çusing‚ğtypedef‚Ì‘ã‚í‚è‚Ég‚¦‚é‚æ‚¤‚É‚È‚Á‚Ä‚¢‚é
 // ‘Î‰‚ÍVS2013‚©‚çH

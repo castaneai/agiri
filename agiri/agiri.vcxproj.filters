@@ -4,8 +4,18 @@
     <ClCompile Include="dllmain.cpp" />
     <ClCompile Include="hook.cpp" />
     <ClCompile Include="server.cpp" />
+    <ClCompile Include="RequestHandler.cpp" />
+    <ClCompile Include="NinjaConnection.cpp" />
+    <ClCompile Include="SocketHelper.cpp" />
+    <ClCompile Include="precompiled_header.cpp" />
   </ItemGroup>
   <ItemGroup>
-    <ClInclude Include="global.h" />
+    <ClInclude Include="RequestHandler.hpp" />
+    <ClInclude Include="messages.hpp" />
+    <ClInclude Include="NinjaConnection.hpp" />
+    <ClInclude Include="types.hpp" />
+    <ClInclude Include="SocketHelper.hpp" />
+    <ClInclude Include="global.hpp" />
+    <ClInclude Include="precompiled_header.hpp" />
   </ItemGroup>
 </Project>

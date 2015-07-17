@@ -1,12 +1,6 @@
-#include "global.h"
-
-// WinAPIフックのライブラリ NCodeHook
-// NCodeHookの中でWindows.hも同時にインクルードされる
+#include "precompiled_header.hpp"
+#include "global.hpp"
 #include "NCodeHook/NCodeHookInstantiation.h"
-
-NCodeHookIA32 hooker;
-
-#pragma region フック関数
 
 namespace hooked
 {
@@ -26,9 +20,12 @@ namespace hooked
 	}
 }
 
-#pragma endregion
+namespace
+{
+    NCodeHookIA32 hooker;
+}
 
-void StartHook()
+void startHook()
 {
 	global::original_api::connect = hooker.createHookByName("ws2_32.dll", "connect", hooked::connect);
 	global::original_api::send = hooker.createHookByName("ws2_32.dll", "send", hooked::send);

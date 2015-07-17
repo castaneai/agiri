@@ -53,7 +53,7 @@ namespace AgiriTest
         /// agiriと通信できるかテスト (ping-pong)
         /// </summary>
         [TestMethod, Timeout(3000)]
-        public void TestInject()
+        public void TestNinjaConnection()
         {
             using (var agiriClient = new AgiriClient(agiriPort)) {
                 // agiriにpingを送ったらpongが返ってくるか？
