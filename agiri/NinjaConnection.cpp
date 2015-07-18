@@ -25,6 +25,11 @@ void NinjaConnection::send(const Message& message) const
     sendAll(reinterpret_cast<const byte_t*>(&message), message.getSize());
 }
 
+void NinjaConnection::sendChunk(const byte_t* const chunk, const uint32_t& chunkSize) const
+{
+    sendAll(chunk, chunkSize);
+}
+
 void NinjaConnection::receive(Message& message) const
 {
     recvAll(reinterpret_cast<byte_t*>(&message.command), sizeof(message.command));
@@ -32,11 +37,11 @@ void NinjaConnection::receive(Message& message) const
     recvAll(message.data, message.dataSize);
 }
 
-inline bool NinjaConnection::sendAll(const byte_t* const output, const uint32_t& size) const
+inline bool NinjaConnection::sendAll(const byte_t* const input, const uint32_t& size) const
 {
     uint32_t sent = 0;
     while (sent < size) {
-        int result = global::original_api::send(m_sock, reinterpret_cast<char*>(const_cast<byte_t*>(output)) + sent, size - sent, 0);
+        int result = global::original_api::send(m_sock, reinterpret_cast<char*>(const_cast<byte_t*>(input)) + sent, size - sent, 0);
         if (result < 1) return false;
         sent += result;
     }

@@ -16,7 +16,12 @@ namespace hooked
 
 	int WINAPI recv(SOCKET socket, char* buf, int len, int flags)
 	{
-		return global::original_api::recv(socket, buf, len, flags);
+		auto receivedSize = global::original_api::recv(socket, buf, len, flags);
+        auto search = global::incomingPacketSniffers.find(socket);
+        if (search != global::incomingPacketSniffers.end()) {
+            search->second->respondSniffIncomingPacket(socket, reinterpret_cast<byte_t*>(buf), receivedSize);
+        }
+        return receivedSize;
 	}
 }
 

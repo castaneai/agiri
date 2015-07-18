@@ -19,6 +19,7 @@ public:
     virtual ~NinjaConnection();
     void send(const Command&, const byte_t* const, const uint32_t& dataSize) const;
     void send(const Message&) const;
+    void sendChunk(const byte_t* const chunk, const uint32_t& chunkSize) const;
     void receive(Message&) const;
 private:
     const socket_t& m_sock;

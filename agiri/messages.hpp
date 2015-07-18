@@ -14,6 +14,8 @@ enum struct Command : uint8_t
     ListSocketRequest = 0x02,
     ListSocketResponse = 0x03,
     InjectOutgoingPacketRequest = 0x04,
+    SwitchSniffIncomingPacketRequest = 0x05,
+    IncomingPacketResponse = 0x06,
 };
 
 #pragma pack(1)
@@ -35,6 +37,12 @@ struct InjectOutgoingPacketRequest
     uint32_t packetSize;
     byte_t packetData[MaxDataSize];
 };
+
+struct SwitchSniffIncomingPacketRequest
+{
+    socket_t targetSocket;
+    byte_t state; // 0: OFF, 1: ON
+};
 #pragma endregion
 
 #pragma region Responses
@@ -47,6 +55,12 @@ struct ListSocketResponse
     {
         return sizeof(socketsCount) + sizeof(sockets[0]) * socketsCount;
     }
+};
+
+struct SniffIncomingPacketResponseHeader
+{
+    socket_t socket;
+    uint32_t packetSize;
 };
 #pragma endregion
 

@@ -7,6 +7,7 @@
 
 #pragma once
 #include "precompiled_header.hpp"
+#include "RequestHandler.hpp"
 
 // C++11からusingをtypedefの代わりに使えるようになっている
 // 対応はVS2013から？
@@ -21,4 +22,8 @@ namespace global {
 		__declspec(selectany) SendFunc send;
 		__declspec(selectany) ConnectFunc connect;
 	}
+
+    // このプロセスがrecvしたパケットを外部のsnifferに流すかどうか
+    // このセットにソケットID-keyが含まれている場合はvalueのRequestHandlerに流す
+    __declspec(selectany) std::unordered_map<socket_t, const RequestHandler*> incomingPacketSniffers;
 }

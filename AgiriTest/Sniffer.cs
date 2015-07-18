@@ -86,6 +86,7 @@ namespace AgiriTest
             var data = BitConverter.GetBytes(targetSocketID).Concat(
                 BitConverter.GetBytes((byte)(state ? 1 : 0))).ToArray();
             var request = new Message(Command.SwitchSniffIncomingPacketRequest, data);
+            Send(request);
         }
 
         public void StartSniffIncomingPacket(int targetSocketID)
@@ -102,9 +103,10 @@ namespace AgiriTest
         {
             while (true) {
                 var mes = Receive();
+                if (mes.Command != Command.IncomingPacketResponse) continue;
                 if (BitConverter.ToUInt32(mes.Data, 0) != targetSocketID) continue;
-                var packetSize = BitConverter.ToUInt32(mes.Data, 4);
-                return mes.Data.Skip(8).ToArray();
+                var packetSize = BitConverter.ToInt32(mes.Data, 4);
+                return mes.Data.Skip(8).Take(packetSize).ToArray();
             }
         }
 

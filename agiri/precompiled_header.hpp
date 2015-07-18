@@ -5,5 +5,6 @@
 #include <Windows.h>
 #include <WinSock2.h>
 #include <cstdint>
+#include <unordered_map>
 
 #include "types.hpp"

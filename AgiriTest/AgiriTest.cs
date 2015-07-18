@@ -104,10 +104,10 @@ namespace AgiriTest
                 var targetSocket = sniffer.GetAllSockets().Where(si => si.EndPoint.Port == 10000).First();
                 sniffer.StartSniffIncomingPacket(targetSocket.SocketID);
                 var writer = new StreamWriter(testClientConn.GetStream());
-                writer.WriteLine("received...!\n");
+                writer.Write("SNIFFED");
                 writer.Flush();
                 var received = sniffer.ReceiveSniffedIncomingPacket(targetSocket.SocketID);
-                Assert.AreEqual("received...!\n", Encoding.ASCII.GetString(received));
+                Assert.AreEqual("SNIFFED", Encoding.ASCII.GetString(received));
             }
         }
     }
