@@ -13,28 +13,48 @@ NinjaConnection::~NinjaConnection()
     closesocket(m_sock);
 }
 
-void NinjaConnection::send(const Command& command, const byte_t* const data, const uint32_t& dataSize) const
+bool NinjaConnection::send(const Command& command, const byte_t* const data, const uint32_t& dataSize) const
 {
-    sendAll(reinterpret_cast<const byte_t*>(&command), sizeof(command));
-    sendAll(reinterpret_cast<const byte_t*>(&dataSize), sizeof(dataSize));
-    sendAll(data, dataSize);
+    if (!sendAll(reinterpret_cast<const byte_t*>(&command), sizeof(command))) {
+        return false;
+    }
+    if (!sendAll(reinterpret_cast<const byte_t*>(&dataSize), sizeof(dataSize))) {
+        return false;
+    }
+    if (!sendAll(data, dataSize)) {
+        return false;
+    }
+    return true;
 }
 
-void NinjaConnection::send(const Message& message) const
+bool NinjaConnection::send(const Message& message) const
 {
-    sendAll(reinterpret_cast<const byte_t*>(&message), message.getSize());
+    if (!sendAll(reinterpret_cast<const byte_t*>(&message), message.getSize())) {
+        return false;
+    }
+    return true;
 }
 
-void NinjaConnection::sendChunk(const byte_t* const chunk, const uint32_t& chunkSize) const
+bool NinjaConnection::sendChunk(const byte_t* const chunk, const uint32_t& chunkSize) const
 {
-    sendAll(chunk, chunkSize);
+    if (!sendAll(chunk, chunkSize)) {
+        return false;
+    }
+    return true;
 }
 
-void NinjaConnection::receive(Message& message) const
+bool NinjaConnection::receive(Message& message) const
 {
-    recvAll(reinterpret_cast<byte_t*>(&message.command), sizeof(message.command));
-    recvAll(reinterpret_cast<byte_t*>(&message.dataSize), sizeof(message.dataSize));
-    recvAll(message.data, message.dataSize);
+    if (!recvAll(reinterpret_cast<byte_t*>(&message.command), sizeof(message.command))) {
+        return false;
+    }
+    if (!recvAll(reinterpret_cast<byte_t*>(&message.dataSize), sizeof(message.dataSize))) {
+        return false;
+    }
+    if (!recvAll(message.data, message.dataSize)) {
+        return false;
+    }
+    return true;
 }
 
 inline bool NinjaConnection::sendAll(const byte_t* const input, const uint32_t& size) const

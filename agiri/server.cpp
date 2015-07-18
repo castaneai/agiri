@@ -12,7 +12,9 @@ namespace
         RequestHandler handler(conn);
         while (true) {
             Message mes;
-            conn.receive(mes);
+            if (!conn.receive(mes)) {
+                break;
+            }
             handler.handle(mes);
         }
     }
