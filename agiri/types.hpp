@@ -5,7 +5,7 @@
 	public: \
 		TypeName() = delete;
 
-const int MaxSocketsCount = 1024;
+const uint32_t MaxSocketsCount = 0xffff;
 
 typedef uint8_t byte_t;
 typedef uint32_t socket_t;
