@@ -31,7 +31,8 @@ bool SocketHelper::getPeerEndPoint(const socket_t& sock, uint32_t& ipAddress, ui
 int SocketHelper::getAllSockets(SocketInfo result[])
 {
     int socketsCount = 0;
-    for (socket_t i = 1; i <= MaxSocketsCount; i++) {
+    socket_t i = 0;
+    while (i <= MaxSocketsCount) {
         uint32_t ipAddress;
         uint16_t port;
         if (SocketHelper::isSocket(i) &&
@@ -41,7 +42,9 @@ int SocketHelper::getAllSockets(SocketInfo result[])
             result[socketsCount].host = ipAddress;
             result[socketsCount].port = port;
             socketsCount++;
+            i += 4; // Winsock creates consequtive four handles, so four consequtive socket handles are the same socket.
         }
+        i++;
     }
     return socketsCount;
 }
