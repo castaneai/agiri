@@ -52,7 +52,7 @@
   <ItemGroup>
     <Compile Include="AgiriTest.cs" />
     <Compile Include="Message.cs" />
-    <Compile Include="Sniffer.cs" />
+    <Compile Include="NinjaConnection.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />
   </ItemGroup>
   <Choose>

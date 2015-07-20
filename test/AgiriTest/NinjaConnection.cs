@@ -19,9 +19,9 @@ namespace AgiriTest
         private readonly BinaryReader reader;
         private readonly BinaryWriter writer;
 
-        public NinjaConnection(ushort serverPort)
+        public NinjaConnection(ushort peerPort)
         {
-            var serverEP = new IPEndPoint(IPAddress.Loopback, serverPort);
+            var serverEP = new IPEndPoint(IPAddress.Loopback, peerPort);
             tcpClient = new TcpClient();
             tcpClient.Connect(serverEP);
             reader = new BinaryReader(tcpClient.GetStream());
@@ -55,6 +55,14 @@ namespace AgiriTest
         {
             reader.Close();
             writer.Close();
+        }
+
+        public bool Ping()
+        {
+            var request = new Message(Command.PingRequest);
+            Send(request);
+            var response = Receive();
+            return response.Command == Command.PongResponse;
         }
 
         public IList<SocketInfo> GetAllSockets()
