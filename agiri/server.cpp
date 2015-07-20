@@ -6,8 +6,9 @@ namespace
 {
     SOCKET listenSocket;
 
-    void onAcceptSniffer(const socket_t snifferSock)
+    DWORD WINAPI onAcceptSnifferThreadFunc(void* argument)
     {
+        auto snifferSock = (reinterpret_cast<const socket_t>(argument));
         NinjaConnection conn(snifferSock);
         RequestHandler handler(conn);
         while (true) {
@@ -17,6 +18,7 @@ namespace
             }
             handler.handle(mes);
         }
+        return 0;
     }
 
     DWORD WINAPI acceptSnifferThreadFunc(LPVOID)
@@ -26,8 +28,7 @@ namespace
             int snifferAddressLength = sizeof(snifferAddress);
             auto acceptedSnifferSock = accept(listenSocket, reinterpret_cast<sockaddr*>(&snifferAddress), &snifferAddressLength);
             if (acceptedSnifferSock != INVALID_SOCKET) {
-                // TODO: accept multi sniffer
-                onAcceptSniffer(acceptedSnifferSock);
+                QueueUserWorkItem(onAcceptSnifferThreadFunc, reinterpret_cast<PVOID>(acceptedSnifferSock), 0);
             }
         }
     }
