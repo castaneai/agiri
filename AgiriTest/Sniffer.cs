@@ -13,13 +13,13 @@ namespace AgiriTest
         public IPEndPoint EndPoint { get; set; }
     }
 
-    public sealed class Sniffer : IDisposable
+    public sealed class NinjaConnection : IDisposable
     {
         private readonly TcpClient tcpClient;
         private readonly BinaryReader reader;
         private readonly BinaryWriter writer;
 
-        public Sniffer(ushort serverPort)
+        public NinjaConnection(ushort serverPort)
         {
             var serverEP = new IPEndPoint(IPAddress.Loopback, serverPort);
             tcpClient = new TcpClient();
@@ -28,7 +28,7 @@ namespace AgiriTest
             writer = new BinaryWriter(tcpClient.GetStream());
         }
 
-        public Sniffer(TcpClient baseClient)
+        public NinjaConnection(TcpClient baseClient)
         {
             tcpClient = baseClient;
             reader = new BinaryReader(tcpClient.GetStream());

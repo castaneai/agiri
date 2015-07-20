@@ -45,7 +45,7 @@ namespace AgiriTest
         [TestMethod]
         public void TestConnect()
         {
-            var agiriClient = new Sniffer(agiriPort);
+            var agiriClient = new NinjaConnection(agiriPort);
             agiriClient.Close();
         }
 
@@ -55,7 +55,7 @@ namespace AgiriTest
         [TestMethod, Timeout(3000)]
         public void TestNinjaConnection()
         {
-            using (var agiriClient = new Sniffer(agiriPort)) {
+            using (var agiriClient = new NinjaConnection(agiriPort)) {
                 // agiriにpingを送ったらpongが返ってくるか？
                 var pingRequest = new Message(Command.PingRequest);
                 agiriClient.Send(pingRequest);
@@ -71,7 +71,7 @@ namespace AgiriTest
         [TestMethod]
         public void TestListSocket()
         {
-            using (var agiriClient = new Sniffer(agiriPort)) {
+            using (var agiriClient = new NinjaConnection(agiriPort)) {
                 var sockets = agiriClient.GetAllSockets();
             }
         }
@@ -83,7 +83,7 @@ namespace AgiriTest
         public void TestInjectOutgoingPacket()
         {
             var testClientConn = testServer.AcceptTcpClient();
-            using (var agiriClient = new Sniffer(agiriPort)) {
+            using (var agiriClient = new NinjaConnection(agiriPort)) {
                 var sockets = agiriClient.GetAllSockets().Where(si => si.EndPoint.Port == 10000).ToList();
                 var targetSocket = sockets.First();
                 agiriClient.InjectOutgoingPacket(targetSocket.SocketID, Encoding.ASCII.GetBytes("abcdefg\n"));
@@ -100,7 +100,7 @@ namespace AgiriTest
         public void TestSniffIncomingPacket()
         {
             var testClientConn = testServer.AcceptTcpClient();
-            using (var sniffer = new Sniffer(agiriPort)) {
+            using (var sniffer = new NinjaConnection(agiriPort)) {
                 var targetSocket = sniffer.GetAllSockets().Where(si => si.EndPoint.Port == 10000).First();
                 sniffer.StartSniffIncomingPacket(targetSocket.SocketID);
                 var writer = new StreamWriter(testClientConn.GetStream());
