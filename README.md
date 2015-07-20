@@ -1,30 +1,17 @@
-agiri - TCP proxy for Windows
+agiri - TCP intruder for Windows
 =============================================
-**This project work in progress, sorry.**
+Agiri provides interfaces to inject or sniff any TCP packets on Windows process.
 
-TCP proxy for Windows processes (.exe files). This program enables your programs to edit, filter or inject TCP packets.
-
-![agiri-san](https://raw.githubusercontent.com/castaneai/agiri/master/doc/icon.png)
-
-Overview 
+Overview
 ----------
-![overview](https://raw.githubusercontent.com/castaneai/agiri/master/doc/system.png)
+![overview](https://raw.githubusercontent.com/castaneai/agiri/master/doc/overview.png)
 
-The agiri provides **ONLY** two sockets for proxy program which you prepared. For instance, Your program send some data with *agiri external socket*, which is sent to server.
+Build & Test
+--------------
+- Visual Studio 2013 (includes Community Edition) required.
 
-GUI Wireframe
-----------------
-![gui](https://raw.githubusercontent.com/castaneai/agiri/master/doc/gui.png)
-
-Requirement
-------------------
-
-- Windows Vista/7/8[.1] with .NET Framework 4.0+
-
-Test
--------
-A unittest of agiri is available in **Visual Studio 2013**.
-You can run tests on "AgiriTest" project in Visual Studio Test Explorer. 
+A unittest of agiri is available in MSTest on Visual Studio 2013.
+You can run tests on "AgiriTest" project in Test Explorer.
 
 Licence
 ----------
