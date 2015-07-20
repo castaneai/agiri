@@ -81,7 +81,7 @@ namespace AgiriTest
                 action(testClientReader, testClientWriter, ninjaConnection);
             }
         }
-        
+
         /// <summary>
         /// テスト用クライアントにagiri.dllを注入できたか
         /// </summary>

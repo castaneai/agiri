@@ -11,13 +11,13 @@ int main(int argc, char** argv)
     }
     int connectPort = atoi(argv[1]);
 
-	WSADATA data;
-	WSAStartup(MAKEWORD(2, 0), &data);
+    WSADATA data;
+    WSAStartup(MAKEWORD(2, 0), &data);
 
-	if (LoadLibraryA("agiri.dll") == 0) {
+    if (LoadLibraryA("agiri.dll") == 0) {
         printf("[ERROR!]LoadLibrary agiri.dll [code:%d]\n", GetLastError());
-		return -1;
-	}
+        return -1;
+    }
 
     while (true) {
         SOCKET s = socket(AF_INET, SOCK_STREAM, IPPROTO_TCP);
@@ -43,5 +43,5 @@ int main(int argc, char** argv)
             }
         }
     }
-	return 0;
+    return 0;
 }

@@ -16,12 +16,12 @@ using SendFunc = int (WINAPI*) (SOCKET socket, char* sendBuffer, int sendLength,
 using ConnectFunc = int (WINAPI*) (SOCKET socket, const sockaddr* address, int addressLength);
 
 namespace global {
-	// フックしたWinsockの元の関数
-	namespace original_api {
-		__declspec(selectany) RecvFunc recv;
-		__declspec(selectany) SendFunc send;
-		__declspec(selectany) ConnectFunc connect;
-	}
+    // フックしたWinsockの元の関数
+    namespace original_api {
+        __declspec(selectany) RecvFunc recv;
+        __declspec(selectany) SendFunc send;
+        __declspec(selectany) ConnectFunc connect;
+    }
 
     // このプロセスがrecvしたパケットを外部のsnifferに流すかどうか
     // このセットにソケットID-keyが含まれている場合はvalueのRequestHandlerに流す
