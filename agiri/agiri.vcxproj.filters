@@ -1,21 +1,57 @@
 ﻿<?xml version="1.0" encoding="utf-8"?>
 <Project ToolsVersion="4.0" xmlns="http://schemas.microsoft.com/developer/msbuild/2003">
   <ItemGroup>
-    <ClCompile Include="dllmain.cpp" />
-    <ClCompile Include="hook.cpp" />
-    <ClCompile Include="server.cpp" />
-    <ClCompile Include="RequestHandler.cpp" />
-    <ClCompile Include="NinjaConnection.cpp" />
-    <ClCompile Include="SocketHelper.cpp" />
     <ClCompile Include="precompiled_header.cpp" />
+    <ClCompile Include="dllmain.cpp">
+      <Filter>dll</Filter>
+    </ClCompile>
+    <ClCompile Include="hook.cpp">
+      <Filter>hook</Filter>
+    </ClCompile>
+    <ClCompile Include="SocketHelper.cpp">
+      <Filter>helper</Filter>
+    </ClCompile>
+    <ClCompile Include="server.cpp">
+      <Filter>server</Filter>
+    </ClCompile>
+    <ClCompile Include="RequestHandler.cpp">
+      <Filter>server</Filter>
+    </ClCompile>
+    <ClCompile Include="NinjaConnection.cpp">
+      <Filter>server</Filter>
+    </ClCompile>
+    <ClCompile Include="Config.cpp" />
   </ItemGroup>
   <ItemGroup>
-    <ClInclude Include="RequestHandler.hpp" />
-    <ClInclude Include="messages.hpp" />
-    <ClInclude Include="NinjaConnection.hpp" />
     <ClInclude Include="types.hpp" />
-    <ClInclude Include="SocketHelper.hpp" />
     <ClInclude Include="global.hpp" />
     <ClInclude Include="precompiled_header.hpp" />
+    <ClInclude Include="SocketHelper.hpp">
+      <Filter>helper</Filter>
+    </ClInclude>
+    <ClInclude Include="RequestHandler.hpp">
+      <Filter>server</Filter>
+    </ClInclude>
+    <ClInclude Include="NinjaConnection.hpp">
+      <Filter>server</Filter>
+    </ClInclude>
+    <ClInclude Include="messages.hpp">
+      <Filter>server</Filter>
+    </ClInclude>
+    <ClInclude Include="Config.hpp" />
+  </ItemGroup>
+  <ItemGroup>
+    <Filter Include="dll">
+      <UniqueIdentifier>{146bb97c-c5b2-4512-a512-383e66093260}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="server">
+      <UniqueIdentifier>{8c479fb0-55a7-475f-919d-992c912fa3dd}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="helper">
+      <UniqueIdentifier>{8d7d504d-9e8c-4c4e-89aa-b69a9d1eef55}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="hook">
+      <UniqueIdentifier>{cc1fb725-833a-46e9-abe8-593fea1860c5}</UniqueIdentifier>
+    </Filter>
   </ItemGroup>
 </Project>
